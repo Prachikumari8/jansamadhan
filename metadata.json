@@ -1,0 +1,8 @@
+{
+  "name": "JanSamadhan",
+  "description": "A modern civic issue reporting platform for citizens to report potholes, streetlights, and other urban problems directly to local authorities.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
