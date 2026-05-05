@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore.ts';
 import { IssueStatus, IssueCategory, Issue } from '../types.ts';
@@ -43,6 +42,12 @@ export const AdminPortal: React.FC = () => {
   const { issues, updateIssueProgress } = useStore();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'MAP' | 'QUEUE' | 'ANALYTICS'>('MAP');
+  const [reportedIssuesTab, setReportedIssuesTab] = useState<'24hours' | 'inProgress' | 'closed'>('24hours');
+  const [openCategories, setOpenCategories] = useState<Record<IssueCategory, boolean>>(() => {
+    const init = {} as Record<IssueCategory, boolean>;
+    Object.values(IssueCategory).forEach((c) => (init[c] = false));
+    return init;
+  });
   const [filterDept, setFilterDept] = useState<string>('All Departments');
   const [aiBriefing, setAiBriefing] = useState<string | null>(null);
   const [loadingBriefing, setLoadingBriefing] = useState(false);
@@ -58,7 +63,8 @@ export const AdminPortal: React.FC = () => {
   const enrichedIssues = useMemo(() => {
     return issues.map(issue => {
       const slaLimit = SLA_HOURS[issue.category] || 24;
-      const deadline = new Date(issue.reportedAt.getTime() + slaLimit * 60 * 60 * 1000);
+      const reportedTime = typeof issue.reportedAt === 'string' ? new Date(issue.reportedAt).getTime() : issue.reportedAt.getTime();
+      const deadline = new Date(reportedTime + slaLimit * 60 * 60 * 1000);
       const now = new Date();
       const hoursRemaining = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
       const slaConsumed = Math.min(100, Math.max(0, (1 - hoursRemaining / slaLimit) * 100));
@@ -84,6 +90,22 @@ export const AdminPortal: React.FC = () => {
     }
     return result;
   }, [enrichedIssues, filterDept]);
+
+  const reportedIssuesByTab = useMemo(() => {
+    const now = new Date().getTime();
+    const last24h = now - (24 * 60 * 60 * 1000);
+    
+    if (reportedIssuesTab === '24hours') {
+      return filteredIssues.filter(i => {
+        const reportedTime = typeof i.reportedAt === 'string' ? new Date(i.reportedAt).getTime() : i.reportedAt.getTime();
+        return reportedTime >= last24h;
+      });
+    } else if (reportedIssuesTab === 'inProgress') {
+      return filteredIssues.filter(i => i.status === IssueStatus.IN_PROGRESS || i.status === IssueStatus.REPORTED);
+    } else {
+      return filteredIssues.filter(i => i.status === IssueStatus.RESOLVED);
+    }
+  }, [filteredIssues, reportedIssuesTab]);
 
   const stats = useMemo(() => {
     const total = enrichedIssues.length;
@@ -175,7 +197,7 @@ export const AdminPortal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="bg-slate-100 p-1 rounded-xl flex">
+              <div className="bg-slate-100 p-1 rounded-xl flex">
               <button 
                 onClick={() => setActiveView('MAP')}
                 className={`px-5 py-2 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all ${activeView === 'MAP' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
@@ -186,13 +208,7 @@ export const AdminPortal: React.FC = () => {
                 onClick={() => setActiveView('QUEUE')}
                 className={`px-5 py-2 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all ${activeView === 'QUEUE' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
               >
-                Queue
-              </button>
-              <button 
-                onClick={() => setActiveView('ANALYTICS')}
-                className={`px-5 py-2 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all ${activeView === 'ANALYTICS' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                Stats
+                Reported Issues
               </button>
             </div>
           </div>
@@ -203,25 +219,52 @@ export const AdminPortal: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-9 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {departmentSummary.map((item) => (
-                <div key={item.category} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div>
-                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{item.department}</p>
-                      <h3 className="text-sm font-semibold text-slate-900">{item.category}</h3>
-                    </div>
-                    <span className="text-lg font-semibold text-slate-900">{item.count}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {item.staff.slice(0, 2).map((staff) => (
-                      <div key={staff.email} className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
-                        <p className="text-xs font-semibold text-slate-900">{staff.name}</p>
-                        <p className="text-[10px] uppercase tracking-widest text-slate-500">{staff.title} • {staff.shift}</p>
+            {activeView === 'MAP' && (
+              <div className="md:col-span-2 xl:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 min-h-[680px] h-full">
+                <h3 className="text-sm font-semibold text-slate-900 mb-4">Staff Directory</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {Object.values(IssueCategory).map((category) => {
+                    const isOpen = openCategories[category];
+                    return (
+                      <div key={category} className="rounded-lg overflow-hidden border border-slate-100">
+                        <div className="flex items-center justify-between bg-slate-50 p-4">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">{DEPARTMENTS[category]}</p>
+                            <h4 className="text-sm font-bold text-slate-900 truncate">{category}</h4>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="inline-flex items-center justify-center w-8 h-8 bg-white text-slate-900 rounded-md border border-slate-100 font-semibold">{CATEGORY_STAFF[category].length}</div>
+                            <button
+                              aria-expanded={isOpen}
+                              onClick={() => setOpenCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+                              className={`flex items-center justify-center w-9 h-9 rounded-md shadow-sm transition ${isOpen ? 'bg-white text-slate-700 border border-slate-200' : 'bg-violet-600 text-white'}`}
+                            >
+                              <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {isOpen && (
+                          <div className="bg-white p-3 space-y-2">
+                            {CATEGORY_STAFF[category].map((staff) => (
+                              <div key={staff.email} className="flex items-center gap-3 rounded-lg p-3 border border-slate-100 hover:shadow-sm">
+                                <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">{staff.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">{staff.name}</p>
+                                  <p className="text-xs text-slate-500 truncate">{staff.title} • <span className="font-medium">{staff.shift}</span></p>
+                                  <p className="text-xs text-slate-400">{staff.phone}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            )}
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
@@ -249,8 +292,29 @@ export const AdminPortal: React.FC = () => {
               )}
 
               {activeView === 'QUEUE' && (
-                <div className="space-y-4">
-                  {filteredIssues.map((issue) => {
+                <div className="space-y-4 p-6">
+                  <div className="flex gap-3 border-b border-slate-200 pb-4">
+                    <button
+                      onClick={() => setReportedIssuesTab('24hours')}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest transition-all ${reportedIssuesTab === '24hours' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                      Last 24 Hours
+                    </button>
+                    <button
+                      onClick={() => setReportedIssuesTab('inProgress')}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest transition-all ${reportedIssuesTab === 'inProgress' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                      In Progress
+                    </button>
+                    <button
+                      onClick={() => setReportedIssuesTab('closed')}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest transition-all ${reportedIssuesTab === 'closed' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                      Closed/Resolved
+                    </button>
+                  </div>
+                  {reportedIssuesByTab.length > 0 ? (
+                    reportedIssuesByTab.map((issue) => {
                     const currentProgress = issue.latestProgress || {
                       stage: issue.status === IssueStatus.RESOLVED ? 'Resolved' : issue.status === IssueStatus.IN_PROGRESS ? 'In Progress' : 'Reported',
                       percent: issue.status === IssueStatus.RESOLVED ? 100 : issue.status === IssueStatus.IN_PROGRESS ? 60 : 20,
@@ -301,102 +365,108 @@ export const AdminPortal: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                          <div className="lg:col-span-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Progress Tracking</p>
-                              <span className="text-[10px] text-slate-500">Last update {new Date(currentProgress.updatedAt).toLocaleString()}</span>
+                          {reportedIssuesTab !== 'closed' && (
+                            <div className="lg:col-span-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Progress Tracking</p>
+                                <span className="text-[10px] text-slate-500">Last update {new Date(currentProgress.updatedAt).toLocaleString()}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {ISSUE_PROGRESS_STAGES.map((stage) => (
+                                  <button
+                                    key={stage}
+                                    onClick={() => setSelectedStageByIssue((prev) => ({ ...prev, [issue.id]: stage }))}
+                                    className={`px-3 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest border transition-all ${selectedStage === stage ? 'bg-slate-900 text-white border-slate-900' : currentProgress.stage === stage ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                                  >
+                                    {stage}
+                                  </button>
+                                ))}
+                              </div>
+                              <textarea
+                                value={progressDrafts[issue.id] || ''}
+                                onChange={(e) => setProgressDrafts(drafts => ({ ...drafts, [issue.id]: e.target.value }))}
+                                placeholder="Add a short work note before saving the next update..."
+                                className="w-full min-h-[88px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                              />
                             </div>
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {ISSUE_PROGRESS_STAGES.map((stage) => (
-                                <button
-                                  key={stage}
-                                  onClick={() => setSelectedStageByIssue((prev) => ({ ...prev, [issue.id]: stage }))}
-                                  className={`px-3 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest border transition-all ${selectedStage === stage ? 'bg-slate-900 text-white border-slate-900' : currentProgress.stage === stage ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
-                                >
-                                  {stage}
-                                </button>
-                              ))}
-                            </div>
-                            <textarea
-                              value={progressDrafts[issue.id] || ''}
-                              onChange={(e) => setProgressDrafts(drafts => ({ ...drafts, [issue.id]: e.target.value }))}
-                              placeholder="Add a short work note before saving the next update..."
-                              className="w-full min-h-[88px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                            />
-                          </div>
+                          )}
 
                           <div className="rounded-2xl border border-slate-100 bg-white p-4 space-y-3">
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Quick Actions</p>
-                            <button
-                              onClick={() => {
-                                if (!selectedStage || selectedStage === 'Resolved') return;
-                                updateProgress(
-                                  issue,
-                                  getStagePercent(selectedStage),
-                                  selectedStage,
-                                  progressDrafts[issue.id] || `Moved to ${selectedStage.toLowerCase()} by admin.`
-                                );
-                              }}
-                              disabled={!canMarkInProgress}
-                              className="w-full rounded-xl bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors"
-                            >
-                              {canMarkInProgress ? 'Mark In Progress' : 'Select Stage First'}
-                            </button>
-                            <button
-                              onClick={() => updateProgress(issue, 100, 'Resolved', progressDrafts[issue.id] || 'Report resolved and closed by admin review.')}
-                              className="w-full rounded-xl bg-emerald-600 text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-emerald-500 transition-colors"
-                            >
-                              Close Report
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (!canReopen) return;
-                                updateProgress(issue, 20, 'Reported', progressDrafts[issue.id] || 'Report reopened by admin for additional work.');
-                              }}
-                              disabled={!canReopen}
-                              className="w-full rounded-xl bg-slate-100 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-slate-200 transition-colors"
-                            >
-                              Reopen
-                            </button>
-                            <button
-                              onClick={() => navigate('/dashboard')}
-                              className="w-full rounded-xl bg-white border border-slate-200 text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:border-blue-300 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
-                            >
-                              <Eye className="w-4 h-4" /> View in Dashboard
-                            </button>
+                            {reportedIssuesTab === 'closed' ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (!canReopen) return;
+                                    updateProgress(issue, 40, 'In Progress', progressDrafts[issue.id] || 'Report reopened by admin for additional work.');
+                                  }}
+                                  disabled={false}
+                                  className="w-full rounded-xl bg-slate-100 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                                >
+                                  Reopen
+                                </button>
+                                <button
+                                  onClick={() => navigate('/dashboard')}
+                                  className="w-full rounded-xl bg-white border border-slate-200 text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:border-blue-300 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <Eye className="w-4 h-4" /> View in Dashboard
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (!selectedStage || selectedStage === 'Resolved') return;
+                                    updateProgress(
+                                      issue,
+                                      getStagePercent(selectedStage),
+                                      selectedStage,
+                                      progressDrafts[issue.id] || `Moved to ${selectedStage.toLowerCase()} by admin.`
+                                    );
+                                  }}
+                                  disabled={!canMarkInProgress}
+                                  className="w-full rounded-xl bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-blue-500 transition-colors"
+                                >
+                                  {canMarkInProgress ? 'Mark In Progress' : 'Select Stage First'}
+                                </button>
+                                <button
+                                  onClick={() => updateProgress(issue, 100, 'Resolved', progressDrafts[issue.id] || 'Report resolved and closed by admin review.')}
+                                  className="w-full rounded-xl bg-emerald-600 text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-emerald-500 transition-colors"
+                                >
+                                  Close Report
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!canReopen) return;
+                                    updateProgress(issue, 20, 'Reported', progressDrafts[issue.id] || 'Report reopened by admin for additional work.');
+                                  }}
+                                  disabled={false}
+                                  className="w-full rounded-xl bg-slate-100 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                                >
+                                  Reopen
+                                </button>
+                                <button
+                                  onClick={() => navigate('/dashboard')}
+                                  className="w-full rounded-xl bg-white border border-slate-200 text-slate-700 px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:border-blue-300 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <Eye className="w-4 h-4" /> View in Dashboard
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                ) : (
+                  <div className="py-12 text-center">
+                    <p className="text-slate-500 text-sm font-medium">No issues found in this category</p>
+                  </div>
+                )}
                 </div>
               )}
 
-              {activeView === 'ANALYTICS' && (
-                <div className="flex-1 p-8 space-y-12 overflow-y-auto">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                      {stats.breakdown.map((item, idx) => (
-                         <div key={idx} className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                            <div className="flex justify-between items-end mb-4">
-                               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{item.category}</p>
-                               <span className="text-xs font-semibold text-slate-900">{item.count}</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                               <div className="h-full bg-blue-500" style={{ width: `${item.percentage}%` }} />
-                            </div>
-                         </div>
-                      ))}
-                   </div>
-
-                   <div className="h-[400px] w-full bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                      <ResponsiveContainer width="100%" height="100%">
-                         <AreaChart data={[{n: 'M', v: 40}, {n: 'T', v: 30}, {n: 'W', v: 45}, {n: 'T', v: 25}, {n: 'F', v: 60}, {n: 'S', v: 55}, {n: 'S', v: 70}]}>
-                           <Area type="monotone" dataKey="v" stroke="#2563eb" fill="#2563eb10" strokeWidth={2} />
-                         </AreaChart>
-                      </ResponsiveContainer>
-                   </div>
-                </div>
-              )}
+                {/* Analytics view removed */}
             </div>
           </div>
 

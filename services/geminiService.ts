@@ -1,7 +1,9 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const parseImageData = (imageBase64: string) => {
   const [header, data] = imageBase64.split(',');
@@ -15,6 +17,17 @@ const parseImageData = (imageBase64: string) => {
 
 export const verifyCivicIssue = async (imageBase64: string, category: string) => {
   try {
+    if (!ai) {
+      console.warn('VITE_GEMINI_API_KEY is missing. Skipping image analysis and returning a safe fallback.');
+      return {
+        confidence: 0.5,
+        aiDescription: 'Image analysis is unavailable because the Gemini API key is not configured. Your report will still be submitted for manual review.',
+        detectedIssue: category,
+        suggestedPriority: 'Medium',
+        isValid: true
+      };
+    }
+
     const image = parseImageData(imageBase64);
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -61,6 +74,11 @@ export const verifyCivicIssue = async (imageBase64: string, category: string) =>
 
 export const generateCityBriefing = async (issueSummary: string) => {
   try {
+    if (!ai) {
+      console.warn('VITE_GEMINI_API_KEY is missing. Returning fallback briefing.');
+      return 'Briefing is unavailable because the Gemini API key is not configured. Please check the raw data metrics.';
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `You are a city management consultant. Analyze the following summary of civic issues and provide: 
