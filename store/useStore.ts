@@ -34,6 +34,7 @@ const INITIAL_ISSUES: Issue[] = [
 
 let globalIssues: Issue[] = [];
 let globalUser: User | null = null;
+let globalStaffMembers: (StaffMember & { userId: string; category: string })[] = [];
 let listeners: (() => void)[] = [];
 
 const normalizeIssue = (issue: any): Issue => ({
@@ -53,6 +54,7 @@ const notify = () => {
 const saveToStorage = () => {
   try {
     localStorage.setItem('jan_samadhan_v2_issues', JSON.stringify(globalIssues));
+    localStorage.setItem('jan_samadhan_v2_staff', JSON.stringify(globalStaffMembers));
     if (globalUser) {
       localStorage.setItem('jan_samadhan_v2_user', JSON.stringify(globalUser));
     } else {
@@ -67,6 +69,9 @@ const loadFromStorage = () => {
   try {
     const savedIssues = localStorage.getItem('jan_samadhan_v2_issues');
     globalIssues = savedIssues ? JSON.parse(savedIssues).map((i: any) => normalizeIssue(i)) : [...INITIAL_ISSUES];
+
+    const savedStaff = localStorage.getItem('jan_samadhan_v2_staff');
+    globalStaffMembers = savedStaff ? JSON.parse(savedStaff) : [];
 
     const savedUser = localStorage.getItem('jan_samadhan_v2_user');
     globalUser = savedUser ? JSON.parse(savedUser) : null;
@@ -188,17 +193,37 @@ export const useStore = () => {
     return user;
   };
 
-  const signup = (name: string, email: string, phone?: string, role?: User['role']) => {
+  const signup = (name: string, email: string, phone?: string, role?: User['role'], staffCategory?: string) => {
     const resolvedRole: User['role'] = role || (email.includes('admin') ? 'ADMIN' : 'CITIZEN');
     const user: User = {
       id: 'u_' + Math.random().toString(36).substr(2, 5),
       name,
       email,
       phone,
-      role: resolvedRole
+      role: resolvedRole,
+      staffCategory: resolvedRole === 'STAFF' ? staffCategory : undefined
     };
     setUser(user);
+    
+    // Add to staff directory if they signed up as STAFF
+    if (resolvedRole === 'STAFF' && staffCategory) {
+      const staffMember: StaffMember & { userId: string; category: string } = {
+        name,
+        title: 'Field Staff',
+        phone: phone || '+91 00000 00000',
+        email,
+        shift: 'Morning',
+        userId: user.id,
+        category: staffCategory
+      };
+      globalStaffMembers = [...globalStaffMembers, staffMember];
+      saveToStorage();
+    }
     return user;
+  };
+
+  const getRegisteredStaffByCategory = (category: string): (StaffMember & { userId: string })[] => {
+    return globalStaffMembers.filter(m => m.category === category).map(({ userId, category, ...staff }) => ({ ...staff, userId }));
   };
 
   return { 
@@ -212,6 +237,7 @@ export const useStore = () => {
     addLegalNoticeToIssue,
     setCurrentUser: setUser, 
     login, 
-    signup 
+    signup,
+    getRegisteredStaffByCategory
   };
 };

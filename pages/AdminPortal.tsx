@@ -39,7 +39,7 @@ import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS
 import { generateCityBriefing } from '../services/geminiService.ts';
 
 export const AdminPortal: React.FC = () => {
-  const { issues, updateIssueProgress } = useStore();
+  const { issues, updateIssueProgress, getRegisteredStaffByCategory } = useStore();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'MAP' | 'QUEUE' | 'ANALYTICS'>('MAP');
   const [reportedIssuesTab, setReportedIssuesTab] = useState<'24hours' | 'inProgress' | 'closed'>('24hours');
@@ -225,6 +225,9 @@ export const AdminPortal: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {Object.values(IssueCategory).map((category) => {
                     const isOpen = openCategories[category];
+                    const registeredStaff = getRegisteredStaffByCategory(category);
+                    const defaultStaff = CATEGORY_STAFF[category];
+                    const allStaff = [...registeredStaff, ...defaultStaff];
                     return (
                       <div key={category} className="rounded-lg overflow-hidden border border-slate-100">
                         <div className="flex items-center justify-between bg-slate-50 p-4">
@@ -234,7 +237,7 @@ export const AdminPortal: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <div className="inline-flex items-center justify-center w-8 h-8 bg-white text-slate-900 rounded-md border border-slate-100 font-semibold">{CATEGORY_STAFF[category].length}</div>
+                            <div className="inline-flex items-center justify-center w-8 h-8 bg-white text-slate-900 rounded-md border border-slate-100 font-semibold">{allStaff.length}</div>
                             <button
                               aria-expanded={isOpen}
                               onClick={() => setOpenCategories(prev => ({ ...prev, [category]: !prev[category] }))}
@@ -246,15 +249,16 @@ export const AdminPortal: React.FC = () => {
                         </div>
 
                         {isOpen && (
-                          <div className="bg-white p-3 space-y-2">
-                            {CATEGORY_STAFF[category].map((staff) => (
+                          <div className="bg-white p-3 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-50 space-y-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f8fafc' }}>
+                            {allStaff.map((staff) => (
                               <div key={staff.email} className="flex items-center gap-3 rounded-lg p-3 border border-slate-100 hover:shadow-sm">
                                 <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">{staff.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-slate-800 truncate">{staff.name}</p>
                                   <p className="text-xs text-slate-500 truncate">{staff.title} • <span className="font-medium">{staff.shift}</span></p>
                                   <p className="text-xs text-slate-400">{staff.phone}</p>
                                 </div>
+                                {'userId' in staff && <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap font-semibold">NEW</span>}
                               </div>
                             ))}
                           </div>
