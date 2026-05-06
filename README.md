@@ -1,3 +1,4 @@
+
 1. Install dependencies:
    `npm install`
 2. Set the `VITE_GEMINI_API_KEY` in [.env](.env) to your Gemini API key
