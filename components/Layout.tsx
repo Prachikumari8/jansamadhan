@@ -60,7 +60,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <NavLink to="/report" icon={PlusCircle}>{copy.report}</NavLink>
                 <NavLink to="/dashboard" icon={LayoutDashboard}>{copy.dashboard}</NavLink>
                 {currentUser?.role === 'ADMIN' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
-                {currentUser?.role === 'STAFF' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
               </nav>
 
               <div className="flex items-center space-x-2 border-l border-slate-100 pl-3 ml-1">
