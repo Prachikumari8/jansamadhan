@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Issue, IssueStatus, User, IssueCategory, LegalNotice, IssueProgressUpdate, StaffMember } from '../types.ts';
 import { CATEGORY_STAFF } from '../constants.tsx';
+import { defaultLanguage, type LanguageCode } from '../services/i18n.ts';
 
 const INITIAL_ISSUES: Issue[] = [
   {
@@ -36,6 +37,7 @@ const INITIAL_ISSUES: Issue[] = [
 let globalIssues: Issue[] = [];
 let globalUser: User | null = null;
 let globalStaffMembers: (StaffMember & { userId: string; category: string })[] = [];
+let globalLanguage: LanguageCode = defaultLanguage;
 let listeners: (() => void)[] = [];
 
 // Track last assigned staff index per category for round-robin scheduling
@@ -66,6 +68,7 @@ const saveToStorage = () => {
     localStorage.setItem('jan_samadhan_v2_issues', JSON.stringify(globalIssues));
     localStorage.setItem('jan_samadhan_v2_staff', JSON.stringify(globalStaffMembers));
     localStorage.setItem('jan_samadhan_v2_assignment_index', JSON.stringify(staffAssignmentIndex));
+    localStorage.setItem('jan_samadhan_v2_language', globalLanguage);
     if (globalUser) {
       localStorage.setItem('jan_samadhan_v2_user', JSON.stringify(globalUser));
     } else {
@@ -87,6 +90,9 @@ const loadFromStorage = () => {
     const savedUser = localStorage.getItem('jan_samadhan_v2_user');
     globalUser = savedUser ? JSON.parse(savedUser) : null;
 
+    const savedLanguage = localStorage.getItem('jan_samadhan_v2_language') as LanguageCode | null;
+    globalLanguage = savedLanguage || defaultLanguage;
+
     const savedIndex = localStorage.getItem('jan_samadhan_v2_assignment_index');
     staffAssignmentIndex = savedIndex ? JSON.parse(savedIndex) : {};
     initStaffAssignmentIndex();
@@ -101,11 +107,13 @@ loadFromStorage();
 export const useStore = () => {
   const [issues, setIssues] = useState<Issue[]>(globalIssues);
   const [currentUser, setCurrentUser] = useState<User | null>(globalUser);
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(globalLanguage);
 
   useEffect(() => {
     const handleChange = () => {
       setIssues([...globalIssues]);
       setCurrentUser(globalUser ? { ...globalUser } : null);
+      setCurrentLanguage(globalLanguage);
     };
     listeners.push(handleChange);
     return () => { listeners = listeners.filter(l => l !== handleChange); };
@@ -197,6 +205,12 @@ export const useStore = () => {
     notify();
   };
 
+  const setLanguage = (language: LanguageCode) => {
+    globalLanguage = language;
+    saveToStorage();
+    notify();
+  };
+
   const login = (email: string, role?: User['role']) => {
     const resolvedRole: User['role'] = role || (email.includes('admin') ? 'ADMIN' : 'CITIZEN');
     const user: User = {
@@ -280,6 +294,7 @@ export const useStore = () => {
   return { 
     issues, 
     currentUser, 
+    currentLanguage,
     updateUser,
     addIssue, 
     updateIssueStatus,
@@ -291,6 +306,7 @@ export const useStore = () => {
     signup,
     getRegisteredStaffByCategory,
     getNextStaffForCategory,
-    getStaffRotationState
+    getStaffRotationState,
+    setLanguage
   };
 };

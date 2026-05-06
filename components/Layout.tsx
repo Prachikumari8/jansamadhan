@@ -8,6 +8,7 @@ import {
   Home as HomeIcon
 } from 'lucide-react';
 import { useStore } from '../store/useStore.ts';
+import { translations } from '../services/i18n.ts';
 
 interface NavLinkProps {
   to: string;
@@ -34,7 +35,8 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, icon: Icon }) => {
 };
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useStore();
+  const { currentUser, currentLanguage } = useStore();
+  const copy = translations[currentLanguage];
   const roleLabel = currentUser?.role === 'ADMIN' ? 'Admin' : currentUser?.role === 'STAFF' ? 'Staff' : 'User';
 
   return (
@@ -54,11 +56,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
             <div className="flex items-center space-x-2 overflow-hidden">
               <nav className="flex items-center space-x-0.5">
-                <NavLink to="/" icon={HomeIcon}>Home</NavLink>
-                <NavLink to="/report" icon={PlusCircle}>Report</NavLink>
-                <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
-                {currentUser?.role === 'ADMIN' && <NavLink to="/admin" icon={ShieldCheck}>Admin</NavLink>}
-                {currentUser?.role === 'STAFF' && <NavLink to="/admin" icon={ShieldCheck}>Staff</NavLink>}
+                <NavLink to="/" icon={HomeIcon}>{copy.home}</NavLink>
+                <NavLink to="/report" icon={PlusCircle}>{copy.report}</NavLink>
+                <NavLink to="/dashboard" icon={LayoutDashboard}>{copy.dashboard}</NavLink>
+                {currentUser?.role === 'ADMIN' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
+                {currentUser?.role === 'STAFF' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
               </nav>
 
               <div className="flex items-center space-x-2 border-l border-slate-100 pl-3 ml-1">
@@ -72,7 +74,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     </Link>
                   </>
                 ) : (
-                  <Link to="/login" className="px-3 py-1.5 bg-slate-900 text-white text-[9px] font-semibold uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-colors">Login</Link>
+                  <Link to="/login" className="px-3 py-1.5 bg-slate-900 text-white text-[9px] font-semibold uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-colors">{copy.login}</Link>
                 )}
               </div>
             </div>
