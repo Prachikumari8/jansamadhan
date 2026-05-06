@@ -106,4 +106,5 @@ export interface User {
   role: 'CITIZEN' | 'ADMIN' | 'STAFF';
   avatar?: string;
   phone?: string;
+  staffCategory?: string; // Category for STAFF role (e.g., 'Pothole', 'Streetlight', etc.)
 }
