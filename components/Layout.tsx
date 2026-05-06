@@ -8,7 +8,7 @@ import {
   Home as HomeIcon
 } from 'lucide-react';
 import { useStore } from '../store/useStore.ts';
-import { translations } from '../services/i18n.ts';
+import { translations, languages } from '../services/i18n.ts';
 
 interface NavLinkProps {
   to: string;
@@ -35,7 +35,7 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, icon: Icon }) => {
 };
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, currentLanguage } = useStore();
+  const { currentUser, currentLanguage, setLanguage } = useStore();
   const copy = translations[currentLanguage];
   const roleLabel = currentUser?.role === 'ADMIN' ? 'Admin' : currentUser?.role === 'STAFF' ? 'Staff' : 'User';
 
@@ -60,7 +60,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <NavLink to="/report" icon={PlusCircle}>{copy.report}</NavLink>
                 <NavLink to="/dashboard" icon={LayoutDashboard}>{copy.dashboard}</NavLink>
                 {currentUser?.role === 'ADMIN' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
-                {currentUser?.role === 'STAFF' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
               </nav>
 
               <div className="flex items-center space-x-2 border-l border-slate-100 pl-3 ml-1">
@@ -69,6 +68,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-semibold uppercase tracking-wider border border-slate-200">
                       {roleLabel}
                     </span>
+                    <label className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors">
+                      <span className="hidden sm:inline">{copy.language_label}</span>
+                      <select
+                        value={currentLanguage}
+                        onChange={(e) => setLanguage(e.target.value as typeof currentLanguage)}
+                        className="bg-transparent text-slate-700 outline-none text-xs"
+                      >
+                        {languages.map((language) => (
+                          <option key={language.code} value={language.code}>{language.native}</option>
+                        ))}
+                      </select>
+                    </label>
                     <Link to="/profile" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 overflow-hidden shadow-sm hover:ring-2 hover:ring-blue-600/20 transition-all">
                       {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : <UserIcon className="w-4 h-4" />}
                     </Link>
