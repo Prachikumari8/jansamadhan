@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Issue, IssueStatus, User, IssueCategory, LegalNotice, IssueProgressUpdate, StaffMember } from '../types.ts';
+import { CATEGORY_STAFF } from '../constants.tsx';
 
 const INITIAL_ISSUES: Issue[] = [
   {
@@ -37,6 +38,15 @@ let globalUser: User | null = null;
 let globalStaffMembers: (StaffMember & { userId: string; category: string })[] = [];
 let listeners: (() => void)[] = [];
 
+// Track last assigned staff index per category for round-robin scheduling
+let staffAssignmentIndex: Record<IssueCategory, number> = {} as Record<IssueCategory, number>;
+
+const initStaffAssignmentIndex = () => {
+  Object.values(IssueCategory).forEach((category) => {
+    staffAssignmentIndex[category] = 0;
+  });
+};
+
 const normalizeIssue = (issue: any): Issue => ({
   ...issue,
   reportedAt: new Date(issue.reportedAt),
@@ -55,6 +65,7 @@ const saveToStorage = () => {
   try {
     localStorage.setItem('jan_samadhan_v2_issues', JSON.stringify(globalIssues));
     localStorage.setItem('jan_samadhan_v2_staff', JSON.stringify(globalStaffMembers));
+    localStorage.setItem('jan_samadhan_v2_assignment_index', JSON.stringify(staffAssignmentIndex));
     if (globalUser) {
       localStorage.setItem('jan_samadhan_v2_user', JSON.stringify(globalUser));
     } else {
@@ -75,8 +86,13 @@ const loadFromStorage = () => {
 
     const savedUser = localStorage.getItem('jan_samadhan_v2_user');
     globalUser = savedUser ? JSON.parse(savedUser) : null;
+
+    const savedIndex = localStorage.getItem('jan_samadhan_v2_assignment_index');
+    staffAssignmentIndex = savedIndex ? JSON.parse(savedIndex) : {};
+    initStaffAssignmentIndex();
   } catch (e) {
     globalIssues = [...INITIAL_ISSUES];
+    initStaffAssignmentIndex();
   }
 };
 
@@ -226,6 +242,41 @@ export const useStore = () => {
     return globalStaffMembers.filter(m => m.category === category).map(({ userId, category, ...staff }) => ({ ...staff, userId }));
   };
 
+  /**
+   * Get next staff member in round-robin sequence for a category.
+   * Cycles through available staff based on assignment history.
+   */
+  const getNextStaffForCategory = (category: IssueCategory): StaffMember => {
+    const availableStaff = CATEGORY_STAFF[category] || [];
+    if (availableStaff.length === 0) {
+      return { name: 'Unassigned', title: 'N/A', phone: 'N/A', email: 'N/A', shift: 'N/A' };
+    }
+
+    // Get current index for this category
+    if (!staffAssignmentIndex[category]) {
+      staffAssignmentIndex[category] = 0;
+    }
+
+    const nextStaff = availableStaff[staffAssignmentIndex[category]];
+    
+    // Move to next staff for next assignment
+    staffAssignmentIndex[category] = (staffAssignmentIndex[category] + 1) % availableStaff.length;
+    
+    // Persist the updated index
+    saveToStorage();
+    
+    return nextStaff;
+  };
+
+  /**
+   * Get current staff assignment rotation state (for UI display)
+   */
+  const getStaffRotationState = (category: IssueCategory) => {
+    const currentIndex = staffAssignmentIndex[category] || 0;
+    const totalStaff = CATEGORY_STAFF[category]?.length || 0;
+    return { currentIndex, totalStaff };
+  };
+
   return { 
     issues, 
     currentUser, 
@@ -238,6 +289,8 @@ export const useStore = () => {
     setCurrentUser: setUser, 
     login, 
     signup,
-    getRegisteredStaffByCategory
+    getRegisteredStaffByCategory,
+    getNextStaffForCategory,
+    getStaffRotationState
   };
 };

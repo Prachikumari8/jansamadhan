@@ -33,14 +33,22 @@ import {
   PieChart,
   Home,
   Menu,
-  ChevronDown
+  ChevronDown,
+  UserCheck
 } from 'lucide-react';
 import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
 import { generateCityBriefing } from '../services/geminiService.ts';
 
 export const AdminPortal: React.FC = () => {
-  const { issues, updateIssueProgress, getRegisteredStaffByCategory } = useStore();
+  const { issues, currentUser, updateIssueProgress, getRegisteredStaffByCategory, getNextStaffForCategory, getStaffRotationState } = useStore();
   const navigate = useNavigate();
+
+  // Redirect if not authorized
+  useEffect(() => {
+    if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'STAFF')) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
   const [activeView, setActiveView] = useState<'MAP' | 'QUEUE' | 'ANALYTICS'>('MAP');
   const [reportedIssuesTab, setReportedIssuesTab] = useState<'24hours' | 'inProgress' | 'closed'>('24hours');
   const [openCategories, setOpenCategories] = useState<Record<IssueCategory, boolean>>(() => {
@@ -54,6 +62,10 @@ export const AdminPortal: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progressDrafts, setProgressDrafts] = useState<Record<string, string>>({});
   const [selectedStageByIssue, setSelectedStageByIssue] = useState<Record<string, typeof ISSUE_PROGRESS_STAGES[number]>>({});
+
+  // Staff portal state
+  const [staffProgressNote, setStaffProgressNote] = useState<string>('');
+  const [staffSelectedStage, setStaffSelectedStage] = useState<typeof ISSUE_PROGRESS_STAGES[number] | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -69,6 +81,7 @@ export const AdminPortal: React.FC = () => {
       const hoursRemaining = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
       const slaConsumed = Math.min(100, Math.max(0, (1 - hoursRemaining / slaLimit) * 100));
       const latestProgress = issue.progressUpdates?.[issue.progressUpdates.length - 1];
+      const rotationState = getStaffRotationState(issue.category);
       
       return {
         ...issue,
@@ -78,10 +91,12 @@ export const AdminPortal: React.FC = () => {
         isAtRisk: hoursRemaining > 0 && hoursRemaining < 4 && issue.status !== IssueStatus.RESOLVED,
         isBreached: hoursRemaining <= 0 && issue.status !== IssueStatus.RESOLVED,
         latestProgress,
-        staff: issue.assignedStaff || CATEGORY_STAFF[issue.category][0]
+        staff: issue.assignedStaff || CATEGORY_STAFF[issue.category][0],
+        isAssigned: !!issue.assignedStaff,
+        rotationState
       };
     });
-  }, [issues]);
+  }, [issues, getStaffRotationState]);
 
   const filteredIssues = useMemo(() => {
     let result = enrichedIssues;
@@ -177,6 +192,184 @@ export const AdminPortal: React.FC = () => {
     setLoadingBriefing(false);
   };
 
+  /**
+   * Assign next staff member in sequence for the issue category
+   */
+  const assignNextStaffMember = (issue: Issue) => {
+    const nextStaff = getNextStaffForCategory(issue.category);
+    updateIssueProgress(issue.id, {
+      stage: 'Assigned',
+      percent: getStagePercent('Assigned'),
+      note: `Auto-assigned to ${nextStaff.name} (${nextStaff.title}) via round-robin scheduling.`,
+      updatedBy: 'Admin System',
+      assignedStaff: nextStaff
+    });
+  };
+
+  /**
+   * Get issues assigned to current staff member
+   */
+  const assignedToCurrentStaff = useMemo(() => {
+    if (currentUser?.role !== 'STAFF' || !currentUser?.name) return [];
+    return issues.filter(issue => issue.assignedStaff?.name === currentUser.name && issue.status !== IssueStatus.RESOLVED);
+  }, [issues, currentUser]);
+
+  /**
+   * Update progress from staff portal
+   */
+  const submitStaffProgressUpdate = (issue: Issue) => {
+    if (!staffSelectedStage || !staffProgressNote.trim()) return;
+    updateIssueProgress(issue.id, {
+      stage: staffSelectedStage,
+      percent: getStagePercent(staffSelectedStage),
+      note: staffProgressNote,
+      updatedBy: currentUser?.name || 'Unknown Staff',
+      assignedStaff: issue.assignedStaff
+    });
+    setStaffProgressNote('');
+    setStaffSelectedStage(null);
+  };
+
+  // If user is STAFF, show Staff Portal
+  if (currentUser?.role === 'STAFF') {
+    const resolvedCount = assignedToCurrentStaff.filter(i => i.status === IssueStatus.RESOLVED).length;
+    
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
+        <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-[100] shadow-sm backdrop-blur-md bg-white/90">
+          <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-11 h-11 bg-emerald-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-lg font-semibold text-slate-900 tracking-tight">Staff Portal</h1>
+                  <span className="bg-emerald-600 text-[9px] text-white font-semibold px-1.5 py-0.5 rounded tracking-widest uppercase">Work Tracking</span>
+                </div>
+                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">
+                  {currentTime.toLocaleTimeString('en-IN', { hour12: false })} • {currentUser?.name}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-8 pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Assigned to You</p>
+              <p className="text-3xl font-black text-slate-900">{assignedToCurrentStaff.length}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">In Progress</p>
+              <p className="text-3xl font-black text-indigo-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.IN_PROGRESS).length}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Pending</p>
+              <p className="text-3xl font-black text-amber-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.REPORTED).length}</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Completed</p>
+              <p className="text-3xl font-black text-emerald-600">{resolvedCount}</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {assignedToCurrentStaff.length > 0 ? (
+              assignedToCurrentStaff.map((issue) => {
+                const latestProgress = issue.progressUpdates?.[issue.progressUpdates.length - 1];
+                const currentProgress = latestProgress || {
+                  stage: issue.status === IssueStatus.IN_PROGRESS ? 'In Progress' : 'Reported',
+                  percent: issue.status === IssueStatus.IN_PROGRESS ? 60 : 50,
+                  note: 'Work assigned to you',
+                  updatedAt: issue.reportedAt,
+                  updatedBy: 'Admin'
+                };
+
+                return (
+                  <div key={issue.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+                    <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+                      <div className="space-y-2 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">{issue.category}</span>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            issue.status === IssueStatus.REPORTED ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                            issue.status === IssueStatus.IN_PROGRESS ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                            'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}>
+                            {issue.status}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-900">{issue.description}</h3>
+                        <p className="text-xs text-slate-500">{issue.location.address || 'No address provided'}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Progress</p>
+                        <p className="text-sm font-semibold text-slate-900 mb-1">{currentProgress.stage}</p>
+                        <div className="h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
+                          <div className="h-full rounded-full bg-blue-600" style={{ width: `${currentProgress.percent}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-500">{currentProgress.percent}% Complete</p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Last Updated</p>
+                        <p className="text-sm font-semibold text-slate-900">{new Date(currentProgress.updatedAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-500 mt-1">{currentProgress.note}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 space-y-3">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Update Progress</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {ISSUE_PROGRESS_STAGES.map((stage) => (
+                          <button
+                            key={stage}
+                            onClick={() => setStaffSelectedStage(stage)}
+                            className={`px-3 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest border transition-all ${
+                              staffSelectedStage === stage
+                                ? 'bg-slate-900 text-white border-slate-900'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                            }`}
+                          >
+                            {stage}
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={staffProgressNote}
+                        onChange={(e) => setStaffProgressNote(e.target.value)}
+                        placeholder="Add a note about your progress..."
+                        className="w-full min-h-[80px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                      <button
+                        onClick={() => submitStaffProgressUpdate(issue)}
+                        disabled={!staffSelectedStage || !staffProgressNote.trim()}
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-colors"
+                      >
+                        <Check className="w-4 h-4 inline mr-2" /> Submit Progress Update
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
+                <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-600 font-medium">No work assigned to you yet</p>
+                <p className="text-slate-500 text-sm mt-2">Check back later for assigned issues</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Admin Portal (existing code continues below)
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-[100] shadow-sm backdrop-blur-md bg-white/90">
@@ -221,7 +414,7 @@ export const AdminPortal: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {activeView === 'MAP' && (
               <div className="md:col-span-2 xl:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 min-h-[680px] h-full">
-                <h3 className="text-sm font-semibold text-slate-900 mb-4">Staff Directory</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 mb-4">Staff Directory (Registered Team Members)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {Object.values(IssueCategory).map((category) => {
                     const isOpen = openCategories[category];
@@ -418,6 +611,15 @@ export const AdminPortal: React.FC = () => {
                               </>
                             ) : (
                               <>
+                                {!issue.isAssigned && issue.status !== IssueStatus.RESOLVED && (
+                                  <button
+                                    onClick={() => assignNextStaffMember(issue)}
+                                    className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                    title="Assign to next available staff in rotation"
+                                  >
+                                    <UserCheck className="w-4 h-4" /> Assign to Next Staff
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => {
                                     if (!selectedStage || selectedStage === 'Resolved') return;
