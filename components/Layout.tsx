@@ -63,15 +63,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {currentUser?.role === 'STAFF' && <NavLink to="/admin" icon={ShieldCheck}>{copy.admin}</NavLink>}
               </nav>
 
-              <div className="flex items-center space-x-3 border-l border-slate-100 pl-3 ml-1">
+              <div className="flex items-center space-x-2 border-l border-slate-100 pl-3 ml-1">
                 {currentUser ? (
                   <>
-                    <div className="text-right hidden sm:block">
-                      <p className="text-sm font-bold text-slate-900">{currentUser.name}</p>
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{roleLabel}</p>
-                    </div>
-                    <div className="border-r border-slate-200 h-6"></div>
-                    <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors">
+                    <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-semibold uppercase tracking-wider border border-slate-200">
+                      {roleLabel}
+                    </span>
+                    <label className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors">
                       <span className="hidden sm:inline">{copy.language_label}</span>
                       <select
                         value={currentLanguage}
@@ -83,6 +81,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         ))}
                       </select>
                     </label>
+                    <Link to="/profile" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 overflow-hidden shadow-sm hover:ring-2 hover:ring-blue-600/20 transition-all">
+                      {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : <UserIcon className="w-4 h-4" />}
+                    </Link>
                   </>
                 ) : (
                   <Link to="/login" className="px-3 py-1.5 bg-slate-900 text-white text-[9px] font-semibold uppercase tracking-widest rounded-lg hover:bg-blue-600 transition-colors">{copy.login}</Link>
