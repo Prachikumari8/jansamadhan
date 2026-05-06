@@ -14,10 +14,13 @@ export const Signup: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<'CITIZEN' | 'ADMIN' | 'STAFF'>('CITIZEN');
+  const [staffCategory, setStaffCategory] = useState<string>('Pothole');
   
   const { signup } = useStore();
   const navigate = useNavigate();
-  const [role, setRole] = useState<'CITIZEN' | 'ADMIN' | 'STAFF'>('CITIZEN');
+  
+  const staffCategories = ['Pothole', 'Streetlight', 'Drainage', 'Garbage', 'Water Supply', 'Electricity', 'Road Damage', 'Other'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +36,7 @@ export const Signup: React.FC = () => {
       return;
     }
 
-    signup(formData.name, formData.email, formData.phone);
-    signup(formData.name, formData.email, formData.phone, role as any);
+    signup(formData.name, formData.email, formData.phone, role as any, role === 'STAFF' ? staffCategory : undefined);
     if (role === 'ADMIN' || role === 'STAFF') {
       navigate('/admin');
     } else {
@@ -154,51 +156,76 @@ export const Signup: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start space-x-3">
-              <div className="w-5 h-5 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 mt-0.5 shadow-sm shadow-blue-200">
-                 <ShieldCheck className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-blue-700 leading-normal">
-                  Sign up and choose your role below. Admin/Staff accounts get access to the Admin Command Center.
-                </p>
-                <div className="mt-3 flex items-center gap-4">
-                  <label className="inline-flex items-center gap-2 text-sm text-white">
-                    <input
-                      type="radio"
-                      name="role_signup"
-                      value="CITIZEN"
-                      checked={role === 'CITIZEN'}
-                      onChange={() => setRole('CITIZEN')}
-                      className="accent-indigo-400 bg-white/5 border-white/20"
-                    />
-                    <span className="ml-1">Citizen</span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm text-white">
-                    <input
-                      type="radio"
-                      name="role_signup"
-                      value="STAFF"
-                      checked={role === 'STAFF'}
-                      onChange={() => setRole('STAFF')}
-                      className="accent-indigo-400 bg-white/5 border-white/20"
-                    />
-                    <span className="ml-1">Staff</span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm text-white">
-                    <input
-                      type="radio"
-                      name="role_signup"
-                      value="ADMIN"
-                      checked={role === 'ADMIN'}
-                      onChange={() => setRole('ADMIN')}
-                      className="accent-indigo-400 bg-white/5 border-white/20"
-                    />
-                    <span className="ml-1">Admin</span>
-                  </label>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-5 h-5 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm shadow-blue-200">
+                   <ShieldCheck className="w-3.5 h-3.5 text-white" />
                 </div>
+                <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">
+                  Choose your role below
+                </p>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <label className="inline-flex items-center gap-3 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all" style={{
+                  borderColor: role === 'CITIZEN' ? '#2563eb' : '#e2e8f0',
+                  backgroundColor: role === 'CITIZEN' ? '#dbeafe' : '#ffffff'
+                }}>
+                  <input
+                    type="radio"
+                    name="role_signup"
+                    value="CITIZEN"
+                    checked={role === 'CITIZEN'}
+                    onChange={() => setRole('CITIZEN')}
+                    className="accent-blue-600 w-4 h-4"
+                  />
+                  <span className="text-sm font-semibold text-slate-700">Citizen</span>
+                </label>
+                <label className="inline-flex items-center gap-3 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all" style={{
+                  borderColor: role === 'STAFF' ? '#2563eb' : '#e2e8f0',
+                  backgroundColor: role === 'STAFF' ? '#dbeafe' : '#ffffff'
+                }}>
+                  <input
+                    type="radio"
+                    name="role_signup"
+                    value="STAFF"
+                    checked={role === 'STAFF'}
+                    onChange={() => setRole('STAFF')}
+                    className="accent-blue-600 w-4 h-4"
+                  />
+                  <span className="text-sm font-semibold text-slate-700">Staff</span>
+                </label>
+                <label className="inline-flex items-center gap-3 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all" style={{
+                  borderColor: role === 'ADMIN' ? '#2563eb' : '#e2e8f0',
+                  backgroundColor: role === 'ADMIN' ? '#dbeafe' : '#ffffff'
+                }}>
+                  <input
+                    type="radio"
+                    name="role_signup"
+                    value="ADMIN"
+                    checked={role === 'ADMIN'}
+                    onChange={() => setRole('ADMIN')}
+                    className="accent-blue-600 w-4 h-4"
+                  />
+                  <span className="text-sm font-semibold text-slate-700">Admin</span>
+                </label>
               </div>
             </div>
+
+            {role === 'STAFF' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Work Category</label>
+                <select
+                  value={staffCategory}
+                  onChange={(e) => setStaffCategory(e.target.value)}
+                  className="w-full h-14 px-4 bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl outline-none transition-all font-medium"
+                >
+                  {staffCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-500">You will appear in this category's staff directory on the Ops Map.</p>
+              </div>
+            )}
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-start space-x-3">
               <div className="w-5 h-5 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 mt-0.5 shadow-sm shadow-blue-200">

@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { languages, translations } from '../services/i18n.ts';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'CITIZEN' | 'ADMIN' | 'STAFF'>('CITIZEN');
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useStore();
+  const { login, currentLanguage, setLanguage } = useStore();
+  const copy = translations[currentLanguage];
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,9 +37,9 @@ export const Login: React.FC = () => {
             <span className="text-2xl font-black tracking-tight text-white uppercase">JanSamadhan</span>
           </Link>
           <div className="space-y-6">
-            <h2 className="text-5xl font-black text-white leading-tight">Securing the <br/>Future of our <span className="text-blue-500">Cities.</span></h2>
+            <h2 className="text-5xl font-black text-white leading-tight">{copy.login_hero_title}</h2>
             <p className="text-slate-400 text-lg max-w-md leading-relaxed">
-              Log in to your secure portal to track reports, receive updates, and contribute to your community.
+              {copy.login_hero_subtitle}
             </p>
           </div>
         </div>
@@ -48,9 +50,23 @@ export const Login: React.FC = () => {
               <span className="text-xs font-bold text-white uppercase tracking-widest">Admin Access</span>
            </div>
            <p className="text-xs text-slate-400 leading-relaxed">
-             Select your role and sign in. Admin/Staff will be directed to the Admin Command Center.
+             {copy.login_role_help}
            </p>
           <div className="mt-3">
+            <label className="text-[10px] font-black text-white uppercase tracking-widest">{copy.language_label}</label>
+            <div className="mt-2 mb-4">
+              <select
+                value={currentLanguage}
+                onChange={(e) => setLanguage(e.target.value as typeof currentLanguage)}
+                className="w-full h-11 rounded-xl bg-white/10 border border-white/10 text-white px-3 text-sm outline-none"
+              >
+                {languages.map((language) => (
+                  <option key={language.code} value={language.code} className="text-slate-900">
+                    {language.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <label className="text-[10px] font-black text-white uppercase tracking-widest">Sign in as</label>
             <div className="flex items-center gap-4 mt-2">
               <label className="inline-flex items-center gap-2 text-sm text-white">
@@ -97,8 +113,8 @@ export const Login: React.FC = () => {
       <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md space-y-10">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
-            <p className="text-slate-500 font-medium mt-2">Please enter your details to log in.</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{copy.login_title}</h1>
+            <p className="text-slate-500 font-medium mt-2">{copy.login_subtitle}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -146,7 +162,7 @@ export const Login: React.FC = () => {
               type="submit"
               className="w-full h-14 bg-slate-900 text-white font-black rounded-2xl hover:bg-blue-600 transition-all shadow-xl flex items-center justify-center space-x-3 active:scale-[0.98]"
             >
-              <span>Secure Log In</span>
+              <span>{copy.login_submit}</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </form>
@@ -154,7 +170,7 @@ export const Login: React.FC = () => {
           <div className="space-y-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest"><span className="bg-white px-4 text-slate-400">Or continue with</span></div>
+              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest"><span className="bg-white px-4 text-slate-400">{copy.login_or_continue}</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -169,7 +185,7 @@ export const Login: React.FC = () => {
             </div>
 
             <p className="text-center text-sm font-medium text-slate-500">
-              New to the platform? <Link to="/signup" className="text-blue-600 font-black hover:underline">Create an account</Link>
+              {copy.login_new_user} <Link to="/signup" className="text-blue-600 font-black hover:underline">{copy.login_create_account}</Link>
             </p>
           </div>
         </div>
