@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { languages, translations } from '../services/i18n.ts';
+import { translations } from '../services/i18n.ts';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'CITIZEN' | 'ADMIN' | 'STAFF'>('CITIZEN');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, currentLanguage, setLanguage } = useStore();
+  const { login, currentLanguage } = useStore();
   const copy = translations[currentLanguage];
   const navigate = useNavigate();
 
@@ -53,20 +53,7 @@ export const Login: React.FC = () => {
              {copy.login_role_help}
            </p>
           <div className="mt-3">
-            <label className="text-[10px] font-black text-white uppercase tracking-widest">{copy.language_label}</label>
-            <div className="mt-2 mb-4">
-              <select
-                value={currentLanguage}
-                onChange={(e) => setLanguage(e.target.value as typeof currentLanguage)}
-                className="w-full h-11 rounded-xl bg-white/10 border border-white/10 text-white px-3 text-sm outline-none"
-              >
-                {languages.map((language) => (
-                  <option key={language.code} value={language.code} className="text-slate-900">
-                    {language.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+
             <label className="text-[10px] font-black text-white uppercase tracking-widest">Sign in as</label>
             <div className="flex items-center gap-4 mt-2">
               <label className="inline-flex items-center gap-2 text-sm text-white">
