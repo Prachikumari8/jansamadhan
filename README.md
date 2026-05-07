@@ -3,3 +3,4 @@
 2. Set the `VITE_GEMINI_API_KEY` in [.env](.env) to your Gemini API key
 3. Run the app:
    `npm run dev`
+FINAL UPDATE
