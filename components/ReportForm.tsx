@@ -11,12 +11,16 @@ import {
   ArrowRight,
   ChevronLeft,
   AlertCircle,
-  ImageIcon
+  ImageIcon,
+  LayoutGrid,
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
 import { IssueCategory, AddressDetails } from '../types';
 import { CATEGORY_CONFIG } from '../constants';
 import { verifyCivicIssue } from '../services/geminiService';
 import { useStore } from '../store/useStore';
+import { getTranslation } from '../services/i18n';
 
 interface ReportFormProps {
   onSubmit: (data: any) => void;
@@ -28,7 +32,7 @@ interface ReportFormProps {
 }
 
 export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, address, isGeocoding }) => {
-  const { currentUser } = useStore();
+  const { currentUser, currentLanguage } = useStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +44,11 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
     description: '',
     reporterName: currentUser?.name || '',
     photo: null as string | null,
-    priority: 'Medium'
+    priority: 'Medium',
+    aiAnalysis: null as any
   });
+
+  const [isVerifyingImage, setIsVerifyingImage] = useState(false);
 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -72,6 +79,44 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
     return () => activeStream?.getTracks().forEach(track => track.stop());
   }, [isCameraActive]);
 
+  const processImage = async (imageBase64: string) => {
+    if (!formData.category) {
+      setError("Please select a category first.");
+      setCurrentStep(1);
+      return;
+    }
+
+    setIsVerifyingImage(true);
+    setError(null);
+
+    try {
+      const finalCategory = formData.category === IssueCategory.OTHER ? (formData.otherCategory || 'Other') : formData.category;
+      const analysis = await verifyCivicIssue(imageBase64, finalCategory as string);
+      
+      if (analysis.isCategoryMatch) {
+        setFormData(p => ({ 
+          ...p, 
+          photo: imageBase64, 
+          aiAnalysis: analysis 
+        }));
+        setError(null);
+        setCurrentStep(3); // Auto-advance to next step
+      } else {
+        setFormData(p => ({ ...p, photo: null, aiAnalysis: null }));
+        const errorMsg = analysis.confidence === 0 
+          ? "AI analysis failed. Please check your connection or try a different image."
+          : `AI rejected this image. It doesn't seem to match the "${finalCategory}" category.`;
+        setError(errorMsg);
+      }
+    } catch (err) {
+      console.error("AI Verification failed", err);
+      // Fallback: allow the photo but mark as manual review
+      setFormData(p => ({ ...p, photo: imageBase64, aiAnalysis: null }));
+    } finally {
+      setIsVerifyingImage(false);
+    }
+  };
+
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
@@ -80,9 +125,9 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0);
-        setFormData(p => ({ ...p, photo: canvas.toDataURL('image/jpeg', 0.85) }));
+        const photoData = canvas.toDataURL('image/jpeg', 0.85);
         setIsCameraActive(false);
-        setError(null);
+        processImage(photoData);
       }
     }
   };
@@ -90,10 +135,22 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        setError("Invalid file type. Please upload a JPG, JPEG, or PNG image.");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("File size too large. Max limit is 5MB.");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(p => ({ ...p, photo: reader.result as string }));
-        setError(null);
+        processImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -117,7 +174,9 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
     const finalCategory = formData.category === IssueCategory.OTHER ? (formData.otherCategory || 'Other') : formData.category;
 
     try {
-      const analysis = await verifyCivicIssue(formData.photo, finalCategory as string);
+      // Use cached analysis if available, otherwise verify now
+      const analysis = formData.aiAnalysis || await verifyCivicIssue(formData.photo, finalCategory as string);
+      
       onSubmit({ 
         ...formData,
         aiDescription: analysis?.aiDescription || "AI verification was inconclusive. The report has been queued for manual review.",
@@ -176,8 +235,12 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
         {currentStep === 1 && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-1">
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Issue Classification</h3>
-              <p className="text-[12px] font-medium text-slate-500">What best fits the problem?</p>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                {getTranslation(currentLanguage, 'classification_title')}
+              </h3>
+              <p className="text-[12px] font-medium text-slate-500">
+                {getTranslation(currentLanguage, 'classification_subtitle')}
+              </p>
             </div>
             
             {/* Grid size restored to the larger version */}
@@ -200,17 +263,21 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                     <div className="scale-110">{config.symbol}</div>
                   </div>
                   {/* Label - Restored to 11px */}
-                  <h4 className="text-[11px] font-black text-slate-900 text-center leading-tight line-clamp-1 px-1">{cat}</h4>
+                  <h4 className="text-[11px] font-black text-slate-900 text-center leading-tight line-clamp-1 px-1">
+                    {getTranslation(currentLanguage, `category_${cat.toLowerCase().replace(' ', '_')}`)}
+                  </h4>
                 </button>
               ))}
             </div>
 
             {formData.category === IssueCategory.OTHER && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Other Category</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                  {getTranslation(currentLanguage, 'other_category_label')}
+                </label>
                 <input 
                   type="text"
-                  placeholder="e.g. Broken Fence"
+                  placeholder={getTranslation(currentLanguage, 'other_category_placeholder')}
                   className="w-full h-12 px-5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 transition-all text-sm font-bold shadow-sm"
                   value={formData.otherCategory}
                   onChange={(e) => setFormData(p => ({ ...p, otherCategory: e.target.value }))}
@@ -227,7 +294,18 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               <p className="text-[12px] font-medium text-slate-500">Provide visual proof for faster resolution.</p>
             </div>
 
-            {isCameraActive ? (
+            {isVerifyingImage ? (
+              <div className="aspect-square w-full rounded-[2.5rem] bg-slate-900 flex flex-col items-center justify-center space-y-4 shadow-2xl">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+                  <ShieldCheck className="absolute inset-0 m-auto w-6 h-6 text-blue-600 animate-pulse" />
+                </div>
+                <div className="text-center px-8">
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-1">AI Verification</p>
+                  <p className="text-sm font-bold text-white tracking-tight">Analyzing photo relevance...</p>
+                </div>
+              </div>
+            ) : isCameraActive ? (
               <div className="space-y-4">
                 <div className="relative aspect-square w-full rounded-[2.5rem] overflow-hidden bg-slate-900 border-2 border-blue-600 shadow-2xl">
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
@@ -249,7 +327,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <button 
-                    onClick={() => { setIsCameraActive(true); setFormData(p => ({ ...p, photo: null })); }}
+                    onClick={() => { setIsCameraActive(true); setFormData(p => ({ ...p, photo: null, aiAnalysis: null })); }}
                     className="p-3 bg-white/90 backdrop-blur rounded-2xl shadow-lg text-slate-600 hover:text-blue-600 transition-all active:scale-95"
                   >
                     <RefreshCcw className="w-4 h-4" />
@@ -277,6 +355,54 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               </div>
             )}
             <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handleGalleryUpload} />
+
+            {error && (
+              <div className="mt-6 p-6 bg-rose-50 rounded-3xl border border-rose-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => { setError(null); setIsCameraActive(true); }}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Try Camera Again</span>
+                  </button>
+                  <button 
+                    onClick={() => { setError(null); galleryInputRef.current?.click(); }}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Open Gallery</span>
+                  </button>
+                  <button 
+                    onClick={() => { setError(null); setCurrentStep(1); }}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    <span>Change Category</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setFormData(p => ({ ...p, category: IssueCategory.OTHER, otherCategory: 'Unclassified Issue' }));
+                      setError(null);
+                    }}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Mark as Other</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setError("Manual review requested. Moving to next step...");
+                      setTimeout(() => { setError(null); setCurrentStep(3); }, 1500);
+                    }}
+                    className="sm:col-span-2 flex items-center justify-center space-x-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>Request Manual Review</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -361,7 +487,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
           
           <button 
             onClick={currentStep === 3 ? handleFinalSubmit : handleNext}
-            disabled={submitting || (currentStep === 3 && isGeocoding)}
+            disabled={submitting || isVerifyingImage || (currentStep === 3 && isGeocoding)}
             className={`flex-1 flex items-center justify-center space-x-3 h-16 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] disabled:opacity-50 ${
               currentStep === 3 ? 'bg-slate-900 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
@@ -373,7 +499,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               </>
             ) : (
               <>
-                <span>{currentStep === 3 ? 'Submit Report' : 'Continue'}</span>
+                <span>{currentStep === 3 ? 'Submit Report' : getTranslation(currentLanguage, 'continue_button')}</span>
                 {currentStep < 3 ? <ArrowRight className="w-5 h-5" /> : <Send className="w-5 h-5" />}
               </>
             )}

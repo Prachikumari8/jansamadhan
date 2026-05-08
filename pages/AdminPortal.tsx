@@ -38,9 +38,10 @@ import {
 } from 'lucide-react';
 import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
 import { generateCityBriefing } from '../services/geminiService.ts';
+import { getTranslation } from '../services/i18n';
 
 export const AdminPortal: React.FC = () => {
-  const { issues, currentUser, updateIssueProgress, getRegisteredStaffByCategory, getNextStaffForCategory, getStaffRotationState } = useStore();
+  const { issues, currentUser, updateIssueProgress, getRegisteredStaffByCategory, getNextStaffForCategory, getStaffRotationState, currentLanguage } = useStore();
   const navigate = useNavigate();
 
   // Redirect if not authorized
@@ -426,7 +427,9 @@ export const AdminPortal: React.FC = () => {
                         <div className="flex items-center justify-between bg-slate-50 p-4">
                           <div className="min-w-0">
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">{DEPARTMENTS[category]}</p>
-                            <h4 className="text-sm font-bold text-slate-900 truncate">{category}</h4>
+                            <h4 className="text-sm font-bold text-slate-900 truncate">
+                              {getTranslation(currentLanguage, `category_${category.toLowerCase().replace(' ', '_')}`)}
+                            </h4>
                           </div>
 
                           <div className="flex items-center gap-3">
@@ -528,7 +531,9 @@ export const AdminPortal: React.FC = () => {
                         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
                           <div className="space-y-2 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">{issue.category}</span>
+                              <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">
+                                {getTranslation(currentLanguage, `category_${issue.category.toLowerCase().replace(' ', '_')}`)}
+                              </span>
                               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{issue.department}</span>
                               <span className={`text-[10px] font-semibold uppercase tracking-widest ${issue.isBreached ? 'text-rose-500' : 'text-slate-500'}`}>
                                 {issue.isBreached ? 'SLA Breached' : `${issue.hoursRemaining.toFixed(1)}h left`}

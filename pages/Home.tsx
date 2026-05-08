@@ -134,7 +134,7 @@ export const Home: React.FC = () => {
               <input
                 className="peer h-full w-full outline-none text-base text-slate-700 pr-4 bg-transparent placeholder-slate-400 font-medium"
                 type="text"
-                placeholder="Search by area, city, or state name..."
+                placeholder={copy.search_placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -143,7 +143,7 @@ export const Home: React.FC = () => {
                 disabled={isSearching}
                 className="h-10 px-6 mr-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white font-semibold rounded-xl transition-colors text-sm shadow-md active:scale-95 flex items-center justify-center min-w-[90px]"
               >
-                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
+                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : (copy.search_button || 'Search')}
               </button>
             </form>
           </div>

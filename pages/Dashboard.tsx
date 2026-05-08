@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { IssueStatus, Issue, IssueCategory } from '../types.ts';
 import { DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
+import { getTranslation } from '../services/i18n';
 
 const StatusBadge: React.FC<{ status: IssueStatus }> = ({ status }) => {
   const styles = {
@@ -101,7 +102,7 @@ const getIssueProgress = (issue: Issue) => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { issues = [], currentUser } = useStore();
+  const { issues = [], currentUser, currentLanguage } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
@@ -181,7 +182,9 @@ export const Dashboard: React.FC = () => {
           >
             <option value="ALL">All Categories</option>
             {Object.values(IssueCategory).map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>
+                {getTranslation(currentLanguage, `category_${cat.toLowerCase().replace(' ', '_')}`)}
+              </option>
             ))}
           </select>
         </div>
@@ -213,7 +216,9 @@ export const Dashboard: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{issue.category}</span>
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                          {getTranslation(currentLanguage, `category_${issue.category.toLowerCase().replace(' ', '_')}`)}
+                        </span>
                         <StatusBadge status={issue.status} />
                       </div>
                       <span className="hidden sm:inline-block text-[10px] font-mono text-slate-300 font-bold uppercase tracking-widest">
@@ -302,7 +307,7 @@ export const Dashboard: React.FC = () => {
                         {selectedIssue.priority} Priority Level
                       </span>
                       <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-100 border border-slate-200">
-                        {selectedIssue.category}
+                        {getTranslation(currentLanguage, `category_${selectedIssue.category.toLowerCase().replace(' ', '_')}`)}
                       </span>
                     </div>
 

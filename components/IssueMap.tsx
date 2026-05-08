@@ -6,6 +6,8 @@ import Supercluster from 'supercluster';
 import { Plus, Minus, Maximize, Minimize, LocateFixed, Loader2, ImageIcon } from 'lucide-react';
 import { Issue, IssueCategory, IssueStatus } from '../types.ts';
 import { getPinSvgString } from './CustomPin.tsx';
+import { useStore } from '../store/useStore';
+import { getTranslation } from '../services/i18n';
 
 interface IssueMapProps {
   issues: Issue[];
@@ -38,6 +40,7 @@ const MemoizedMarker = memo(({
   icon: L.DivIcon,
   showPopup?: boolean
 }) => {
+  const { currentLanguage } = useStore();
   return (
     <Marker 
       position={[issue.location.lat, issue.location.lng]} 
@@ -58,7 +61,9 @@ const MemoizedMarker = memo(({
       )}
       <Tooltip direction="top" offset={[0, -15]} opacity={1} permanent={false}>
         <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-900">{issue.category}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-900">
+            {getTranslation(currentLanguage, `category_${issue.category.toLowerCase().replace(' ', '_')}`)}
+          </span>
           <div className={`w-1.5 h-1.5 rounded-full ${issue.priority === 'High' ? 'bg-rose-500' : issue.priority === 'Medium' ? 'bg-amber-500' : 'bg-slate-400'}`}></div>
         </div>
       </Tooltip>
