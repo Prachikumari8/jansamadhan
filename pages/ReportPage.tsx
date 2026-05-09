@@ -88,24 +88,68 @@ export const ReportPage: React.FC = () => {
     };
   }, []);
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = async (data: any) => {
     const finalLocation = markerPosition || userLocation || DEFAULT_COORDS;
 
-    addIssue({
-      category: data.category,
-      description: data.description || 'No description provided.',
-      aiAnalysis: data.aiDescription,
-      location: {
-        lat: finalLocation.lat,
-        lng: finalLocation.lng,
-        address: data.manualAddress || detectedAddress?.fullAddress || 'Detected Location',
-        details: detectedAddress || undefined
-      },
-      photoUrl: data.photo,
-      reportedBy: data.reporterName || currentUser?.name || 'Anonymous Citizen',
-      priority: data.suggestedPriority || data.priority || 'Medium'
-    });
-    navigate('/dashboard');
+    try {
+      // 1. Prepare FormData for multipart upload
+      const formData = new FormData();
+      formData.append('issueType', data.category);
+      formData.append('description', data.description || '');
+      formData.append('latitude', finalLocation.lat.toString());
+      formData.append('longitude', finalLocation.lng.toString());
+      formData.append('address', data.manualAddress || detectedAddress?.fullAddress || 'Detected Location');
+      
+      // 2. Convert base64 photo to Blob
+      if (data.photo) {
+        const fetchResponse = await fetch(data.photo);
+        const blob = await fetchResponse.blob();
+        formData.append('image', blob, `report_${Date.now()}.jpg`);
+      }
+
+      // 3. Send to Backend
+      const token = localStorage.getItem('jansamadhan_token');
+      
+      if (!token) {
+        alert("Your session has expired. Please log out and log in again to submit a report.");
+        setLoading(false); // If you have a loading state
+        return;
+      }
+
+      const res = await fetch('http://localhost:5000/api/reports', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}` 
+        },
+        body: formData,
+      });
+
+      const result = await res.json();
+      
+      if (result.status === 'success') {
+        // 4. Update local store for UI feedback
+        addIssue({
+          category: data.category,
+          description: data.description || 'No description provided.',
+          aiAnalysis: data.aiDescription,
+          location: {
+            lat: finalLocation.lat,
+            lng: finalLocation.lng,
+            address: data.manualAddress || detectedAddress?.fullAddress || 'Detected Location',
+            details: detectedAddress || undefined
+          },
+          photoUrl: result.data.report.imageUrl, // Real Drive URL from backend
+          reportedBy: data.reporterName || currentUser?.name || 'Anonymous Citizen',
+          priority: data.suggestedPriority || data.priority || 'Medium'
+        });
+        navigate('/dashboard');
+      } else {
+        alert("Failed to submit report. Please try again.");
+      }
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Error connecting to server. Check if backend is running.");
+    }
   };
 
   const handleAddressManualUpdate = (lat: number, lng: number, newAddress: AddressDetails) => {

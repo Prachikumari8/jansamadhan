@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CITIZEN
+  STAFF
+  ADMIN
+}
+
+enum ReportStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  name      String?
+  role      Role     @default(CITIZEN)
+  
+  // Auth enhancements
+  googleId    String?  @unique
+  otpString   String?
+  otpExpires  DateTime?
+  isVerified  Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports         Report[] @relation("ReportedBy")
+  assignedReports Report[] @relation("AssignedTo")
+
+  @@map("users")
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  issueType   String
+  description String       @db.Text
+  imageUrl    String?
+  latitude    Float
+  longitude   Float
+  address     String
+  status      ReportStatus @default(PENDING)
+  
+  reportedById String
+  reportedBy   User    @relation("ReportedBy", fields: [reportedById], references: [id])
+  
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reports")
+}

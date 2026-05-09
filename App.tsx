@@ -39,27 +39,33 @@ const ResetToHome: React.FC = () => {
   return null;
 };
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 const App: React.FC = () => {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
   return (
-    <HashRouter>
-      <ResetToHome />
-      <Layout>
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/report" element={<ReportPage />} />
-            <Route path="/map" element={<MapExplorer />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<AdminPortal />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-    </HashRouter>
+    <GoogleOAuthProvider clientId={clientId}>
+      <HashRouter>
+        <ResetToHome />
+        <Layout>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/report" element={<ReportPage />} />
+              <Route path="/map" element={<MapExplorer />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin" element={<AdminPortal />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Suspense>
+        </Layout>
+      </HashRouter>
+    </GoogleOAuthProvider>
   );
 };
 

@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+const apiKey = ((import.meta as any).env.VITE_GEMINI_API_KEY || '').trim();
 
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const ai = (apiKey && apiKey.length > 10) ? new GoogleGenAI({ apiKey }) : null;
 
 const parseImageData = (imageBase64: string) => {
   const [header, data] = imageBase64.split(',');
