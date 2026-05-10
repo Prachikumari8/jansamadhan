@@ -97,42 +97,41 @@ export const Home: React.FC = () => {
 
   return (
     <div className="flex flex-col bg-slate-50 overflow-hidden no-scrollbar">
-      <section className="relative pt-12 pb-12 lg:pt-20 lg:pb-20 bg-white border-b border-slate-50">
-        <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+      <section className="relative pt-8 pb-8 sm:pt-10 sm:pb-10 lg:pt-16 lg:pb-16 bg-white border-b border-slate-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10 text-center">
 
-
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-[0.15em] border border-blue-100 mb-6">
+          <div className="inline-flex items-center px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-[0.15em] border border-blue-100 mb-4 sm:mb-6">
             <Zap className="w-3 h-3 mr-2 text-blue-600 animate-pulse" />
             JanSamadhan 2025
           </div>
 
-          <h1 className="text-3xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-4 sm:mb-6">
             {copy.welcome}
           </h1>
 
-          <p className="text-base lg:text-lg text-slate-500 leading-relaxed max-w-xl mx-auto font-medium mb-10">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-500 leading-relaxed max-w-xl mx-auto font-medium mb-6 sm:mb-8">
             {copy.hero_sub}
           </p>
 
           <Link
             to="/report"
-            className="inline-flex items-center h-12 bg-slate-950 text-white font-bold rounded-full hover:bg-blue-600 transition-all shadow-lg px-10 group uppercase tracking-[0.15em] text-[10px]"
+            className="inline-flex items-center h-10 sm:h-11 bg-slate-950 text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg px-6 sm:px-8 group uppercase tracking-[0.15em] text-[10px]"
           >
-            <PlusCircle className="w-4 h-4 mr-3" />
+            <PlusCircle className="w-4 h-4 mr-2 sm:mr-3" />
             <span className="mt-0.5">{copy.report_issue}</span>
-            <ArrowRight className="w-4 h-4 ml-6 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 ml-3 sm:ml-4 group-hover:translate-x-1 transition-transform" />
           </Link>
 
-          <div className="max-w-2xl mx-auto mt-12 relative">
+          <div className="max-w-2xl mx-auto mt-8 sm:mt-10 relative">
             <form
               onSubmit={handleSearch}
-              className="relative flex items-center w-full h-14 rounded-2xl focus-within:shadow-xl focus-within:border-blue-300 bg-white overflow-hidden border border-slate-200 transition-all"
+              className="relative flex items-center w-full h-11 sm:h-12 rounded-xl focus-within:shadow-lg focus-within:border-blue-300 bg-white overflow-hidden border border-slate-200 transition-all"
             >
-              <div className="grid place-items-center h-full w-14 text-slate-400">
-                <Search className="h-5 w-5" />
+              <div className="grid place-items-center h-full w-11 sm:w-12 text-slate-400">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <input
-                className="peer h-full w-full outline-none text-base text-slate-700 pr-4 bg-transparent placeholder-slate-400 font-medium"
+                className="peer h-full w-full outline-none text-sm text-slate-700 pr-4 bg-transparent placeholder-slate-400 font-medium"
                 type="text"
                 placeholder={copy.search_placeholder}
                 value={searchQuery}
@@ -141,7 +140,7 @@ export const Home: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSearching}
-                className="h-10 px-6 mr-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white font-semibold rounded-xl transition-colors text-sm shadow-md active:scale-95 flex items-center justify-center min-w-[90px]"
+                className="h-8 sm:h-9 px-4 sm:px-5 mr-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white font-semibold rounded-lg transition-colors text-xs shadow-md active:scale-95 flex items-center justify-center min-w-[70px] sm:min-w-[80px]"
               >
                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : (copy.search_button || 'Search')}
               </button>
@@ -150,9 +149,9 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-12 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="relative h-[500px] w-full bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-2xl">
+      <section className="py-6 sm:py-8 lg:py-10 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="relative h-[350px] sm:h-[420px] lg:h-[500px] w-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
             <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>}>
               <IssueMap issues={filteredIssues} zoom={mapZoom} center={mapCenter} />
             </Suspense>

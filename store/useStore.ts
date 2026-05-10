@@ -237,17 +237,21 @@ export const useStore = () => {
     
     // Add to staff directory if they signed up as STAFF
     if (resolvedRole === 'STAFF' && staffCategory) {
-      const staffMember: StaffMember & { userId: string; category: string } = {
-        name,
-        title: 'Field Staff',
-        phone: phone || '+91 00000 00000',
-        email,
-        shift: 'Morning',
-        userId: user.id,
-        category: staffCategory
-      };
-      globalStaffMembers = [...globalStaffMembers, staffMember];
-      saveToStorage();
+      // Check for duplicate — don't add if this email is already in the staff directory
+      const alreadyRegistered = globalStaffMembers.some(m => m.email === email);
+      if (!alreadyRegistered) {
+        const staffMember: StaffMember & { userId: string; category: string } = {
+          name,
+          title: 'Field Staff',
+          phone: phone || '+91 00000 00000',
+          email,
+          shift: 'Morning',
+          userId: user.id,
+          category: staffCategory
+        };
+        globalStaffMembers = [...globalStaffMembers, staffMember];
+        saveToStorage();
+      }
     }
     return user;
   };

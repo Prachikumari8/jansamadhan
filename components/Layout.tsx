@@ -42,10 +42,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900 bg-slate-50 no-scrollbar">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-[1001] shadow-sm backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex justify-between h-14 items-center gap-2">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="flex justify-between h-12 sm:h-14 items-center gap-2">
             <Link to="/" className="flex items-center space-x-2 group shrink-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="flex flex-col">

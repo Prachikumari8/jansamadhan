@@ -4,15 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Camera, 
-  Globe, 
   LogOut, 
   Check, 
-  Settings,
   Mail,
   Smartphone,
   BadgeCheck,
-  Lock,
-  ArrowLeft
+  Pencil,
+  Shield,
+  ChevronRight
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
@@ -27,11 +26,14 @@ export const Profile: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Lock className="w-8 h-8" />
+          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+            <User className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Login Required</h2>
-          <button onClick={() => navigate('/login')} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg">Login</button>
+          <h2 className="text-lg font-semibold text-slate-900">Login Required</h2>
+          <p className="text-sm text-slate-500">Please sign in to view your profile</p>
+          <button onClick={() => navigate('/login')} className="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+            Sign In
+          </button>
         </div>
       </div>
     );
@@ -56,97 +58,149 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const roleBadge = {
+    CITIZEN: { label: 'Citizen', color: 'bg-sky-50 text-sky-700' },
+    ADMIN: { label: 'Admin', color: 'bg-amber-50 text-amber-700' },
+    STAFF: { label: 'Staff', color: 'bg-emerald-50 text-emerald-700' },
+  }[currentUser.role] || { label: 'User', color: 'bg-slate-50 text-slate-600' };
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 no-scrollbar">
-      <div className="h-48 bg-slate-900 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
-        <div className="max-w-4xl mx-auto px-6 h-full flex items-center">
-           <button onClick={() => navigate(-1)} className="p-2 bg-white/10 text-white hover:bg-white/20 rounded-xl transition-all">
-             <ArrowLeft className="w-5 h-5" />
-           </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 no-scrollbar">
+      {/* Content */}
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
 
-      <div className="max-w-3xl mx-auto px-6 -mt-20 relative z-10">
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-            <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="relative shrink-0">
-                <div className="w-32 h-32 rounded-[2.5rem] bg-indigo-50 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
-                  {currentUser.avatar ? <img src={currentUser.avatar} className="w-full h-full object-cover" /> : <User className="w-12 h-12 text-indigo-400" />}
-                </div>
-                <button onClick={() => fileInputRef.current?.click()} className="absolute -bottom-2 -right-2 w-10 h-10 bg-indigo-600 text-white rounded-2xl border-4 border-white shadow-lg flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-90">
-                  <Camera className="w-5 h-5" />
-                </button>
-                <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleAvatarChange} />
+        {/* Avatar + Identity Card */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* Subtle gradient strip */}
+          <div className="h-16 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.15),transparent)]" />
+          </div>
+
+          <div className="px-5 pb-5 -mt-8">
+            {/* Avatar */}
+            <div className="relative inline-block">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white border-[3px] border-white shadow-md flex items-center justify-center overflow-hidden">
+                {currentUser.avatar 
+                  ? <img src={currentUser.avatar} className="w-full h-full object-cover" alt="Avatar" /> 
+                  : <User className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-400" />
+                }
               </div>
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="absolute -bottom-1 -right-1 w-7 h-7 bg-indigo-600 text-white rounded-lg border-2 border-white shadow-sm flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-90"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
+              <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleAvatarChange} />
+            </div>
 
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Verified Identity</span>
-                      <BadgeCheck className="w-3.5 h-3.5 text-indigo-600" />
-                    </div>
-                    {isEditingName ? (
-                      <div className="flex items-center space-x-2">
-                        <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="text-2xl font-black text-slate-900 border-b-2 border-indigo-600 outline-none w-full" autoFocus onBlur={handleUpdateName} />
-                        <button onClick={handleUpdateName} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check className="w-5 h-5" /></button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-3 group">
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">{currentUser.name}</h1>
-                        <button onClick={() => setIsEditingName(true)} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"><Settings className="w-4 h-4" /></button>
-                      </div>
-                    )}
-                    <p className="text-slate-500 font-medium text-sm">{currentUser.email}</p>
+            {/* Name + Email */}
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                {isEditingName ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="text" 
+                      value={newName} 
+                      onChange={(e) => setNewName(e.target.value)} 
+                      className="text-lg font-bold text-slate-900 border-b-2 border-indigo-500 outline-none bg-transparent flex-1 min-w-0 py-0.5" 
+                      autoFocus 
+                      onBlur={handleUpdateName}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUpdateName()}
+                    />
+                    <button onClick={handleUpdateName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md flex-shrink-0">
+                      <Check className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-2 group">
+                    <h1 className="text-lg sm:text-xl font-bold text-slate-900">{currentUser.name}</h1>
+                    <button 
+                      onClick={() => setIsEditingName(true)} 
+                      className="p-1 text-slate-300 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100 sm:opacity-0 active:opacity-100"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 truncate">{currentUser.email}</p>
+              <div className="flex items-center gap-2 pt-1">
+                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${roleBadge.color}`}>
+                  {roleBadge.label}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                  <BadgeCheck className="w-3 h-3" />
+                  Verified
+                </span>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 space-y-4">
-               <div className="flex items-center space-x-3 pb-2 border-b border-slate-50">
-                  <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                    <Globe className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Contact Info</h3>
-               </div>
-               <div className="space-y-4">
-                  <div className="flex items-start space-x-3 p-3 bg-slate-50 rounded-2xl">
-                    <Mail className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Email</p>
-                      <p className="text-xs font-bold text-slate-800 truncate">{currentUser.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3 p-3 bg-slate-50 rounded-2xl">
-                    <Smartphone className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone</p>
-                      <p className="text-xs font-bold text-slate-800">{currentUser.phone || 'Not Provided'}</p>
-                    </div>
-                  </div>
-               </div>
+        {/* Contact Details */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="px-5 py-3.5 border-b border-slate-50">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact Details</h3>
+          </div>
+          <div className="divide-y divide-slate-50">
+            <div className="px-5 py-3 flex items-center gap-3">
+              <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Mail className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Email</p>
+                <p className="text-sm font-medium text-slate-800 truncate">{currentUser.email}</p>
+              </div>
             </div>
-
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6">
-               <div className="flex items-center justify-between">
-                 <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Account Security</h3>
-                 <div className="flex items-center space-x-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                   <span>Secure</span>
-                 </div>
-               </div>
-               <button onClick={handleLogout} className="w-full py-5 border-2 border-rose-100 text-rose-600 font-black rounded-2xl text-[11px] uppercase tracking-[0.3em] hover:bg-rose-50 transition-all flex items-center justify-center space-x-3">
-                 <LogOut className="w-4 h-4" />
-                 <span>Log Out</span>
-               </button>
+            <div className="px-5 py-3 flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Phone</p>
+                <p className="text-sm font-medium text-slate-800">{currentUser.phone || 'Not provided'}</p>
+              </div>
             </div>
+            {currentUser.role === 'STAFF' && currentUser.staffCategory && (
+              <div className="px-5 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Department</p>
+                  <p className="text-sm font-medium text-slate-800">{currentUser.staffCategory}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Account Security */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</h3>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              Secure
+            </span>
+          </div>
+          <div className="p-3">
+            <button 
+              onClick={handleLogout} 
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-semibold">Log Out</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-rose-300 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom spacing for mobile nav */}
+        <div className="h-4" />
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ const createSendToken = (user, statusCode, res) => {
 
 export const signup = async (req, res, next) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, phone, staffCategory } = req.body;
 
     if (!email || !password) {
       return next(new AppError('Please provide email and password', 400));
@@ -51,7 +51,9 @@ export const signup = async (req, res, next) => {
         email,
         password: hashedPassword,
         name,
+        phone: phone || null,
         role: role || 'CITIZEN',
+        staffCategory: role === 'STAFF' ? (staffCategory || null) : null,
         otpString: otp,
         otpExpires
       },

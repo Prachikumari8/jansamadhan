@@ -237,10 +237,10 @@ export const AdminPortal: React.FC = () => {
     
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
-        <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-[100] shadow-sm backdrop-blur-md bg-white/90">
-          <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-11 h-11 bg-emerald-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sticky top-0 z-[100] shadow-sm backdrop-blur-md bg-white/90">
+          <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center text-white shrink-0 shadow">
                 <Activity className="w-5 h-5" />
               </div>
               <div>
@@ -256,27 +256,27 @@ export const AdminPortal: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-8 pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Assigned to You</p>
-              <p className="text-3xl font-black text-slate-900">{assignedToCurrentStaff.length}</p>
+        <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 pb-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Assigned to You</p>
+              <p className="text-2xl font-black text-slate-900">{assignedToCurrentStaff.length}</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">In Progress</p>
-              <p className="text-3xl font-black text-indigo-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.IN_PROGRESS).length}</p>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">In Progress</p>
+              <p className="text-2xl font-black text-indigo-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.IN_PROGRESS).length}</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Pending</p>
-              <p className="text-3xl font-black text-amber-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.REPORTED).length}</p>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Pending</p>
+              <p className="text-2xl font-black text-amber-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.REPORTED).length}</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Completed</p>
-              <p className="text-3xl font-black text-emerald-600">{resolvedCount}</p>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Completed</p>
+              <p className="text-2xl font-black text-emerald-600">{resolvedCount}</p>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {assignedToCurrentStaff.length > 0 ? (
               assignedToCurrentStaff.map((issue) => {
                 const latestProgress = issue.progressUpdates?.[issue.progressUpdates.length - 1];
@@ -289,7 +289,7 @@ export const AdminPortal: React.FC = () => {
                 };
 
                 return (
-                  <div key={issue.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+                  <div key={issue.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3">
                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
                       <div className="space-y-2 min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -307,8 +307,8 @@ export const AdminPortal: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Progress</p>
                         <p className="text-sm font-semibold text-slate-900 mb-1">{currentProgress.stage}</p>
                         <div className="h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
@@ -316,21 +316,21 @@ export const AdminPortal: React.FC = () => {
                         </div>
                         <p className="text-[10px] text-slate-500">{currentProgress.percent}% Complete</p>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Last Updated</p>
                         <p className="text-sm font-semibold text-slate-900">{new Date(currentProgress.updatedAt).toLocaleDateString()}</p>
                         <p className="text-xs text-slate-500 mt-1">{currentProgress.note}</p>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 space-y-3">
+                    <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 space-y-2">
                       <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Update Progress</p>
                       <div className="flex flex-wrap gap-2 mb-3">
                         {ISSUE_PROGRESS_STAGES.map((stage) => (
                           <button
                             key={stage}
                             onClick={() => setStaffSelectedStage(stage)}
-                            className={`px-3 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest border transition-all ${
+                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest border transition-all ${
                               staffSelectedStage === stage
                                 ? 'bg-slate-900 text-white border-slate-900'
                                 : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
@@ -344,12 +344,12 @@ export const AdminPortal: React.FC = () => {
                         value={staffProgressNote}
                         onChange={(e) => setStaffProgressNote(e.target.value)}
                         placeholder="Add a note about your progress..."
-                        className="w-full min-h-[80px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                        className="w-full min-h-[70px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-100"
                       />
                       <button
                         onClick={() => submitStaffProgressUpdate(issue)}
                         disabled={!staffSelectedStage || !staffProgressNote.trim()}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-colors"
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-widest transition-colors"
                       >
                         <Check className="w-4 h-4 inline mr-2" /> Submit Progress Update
                       </button>
@@ -358,7 +358,7 @@ export const AdminPortal: React.FC = () => {
                 );
               })
             ) : (
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
                 <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-600 font-medium">No work assigned to you yet</p>
                 <p className="text-slate-500 text-sm mt-2">Check back later for assigned issues</p>
@@ -391,7 +391,7 @@ export const AdminPortal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-              <div className="bg-slate-100 p-1 rounded-xl flex">
+              <div className="bg-slate-100 p-1 rounded-lg flex">
               <button 
                 onClick={() => setActiveView('MAP')}
                 className={`px-5 py-2 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all ${activeView === 'MAP' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
@@ -409,12 +409,12 @@ export const AdminPortal: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-8 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-9 space-y-8">
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+          <div className="lg:col-span-9 space-y-5 sm:space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {activeView === 'MAP' && (
-              <div className="md:col-span-2 xl:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 min-h-[680px] h-full">
+              <div className="md:col-span-2 xl:col-span-4 bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 min-h-[500px] lg:min-h-[680px] h-full">
                     <h3 className="text-sm font-semibold text-slate-900 mb-4">Staff Directory (Registered Team Members)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {Object.values(IssueCategory).map((category) => {
@@ -467,26 +467,26 @@ export const AdminPortal: React.FC = () => {
             )}
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {[
                 { label: 'Total Reports', value: stats.total, color: 'text-blue-600', icon: <FileText className="w-4 h-4" /> },
                 { label: 'Resolved', value: stats.resolved, color: 'text-emerald-600', icon: <CheckCircle2 className="w-4 h-4" /> },
                 { label: 'Active', value: stats.active, color: 'text-amber-600', icon: <AlertCircle className="w-4 h-4" /> },
                 { label: 'Resolution Rate', value: `${stats.resolutionRate}%`, color: 'text-blue-600', icon: <TrendingUp className="w-4 h-4" /> },
               ].map((kpi, idx) => (
-                <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2 bg-slate-50 rounded-lg text-slate-400">{kpi.icon}</div>
+                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="p-1.5 bg-slate-50 rounded-lg text-slate-400">{kpi.icon}</div>
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{kpi.label}</span>
                   </div>
-                  <p className={`text-2xl font-semibold text-slate-900`}>{kpi.value}</p>
+                  <p className={`text-xl sm:text-2xl font-semibold text-slate-900`}>{kpi.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden min-h-[600px] flex flex-col">
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-lg overflow-hidden min-h-[400px] lg:min-h-[600px] flex flex-col">
               {activeView === 'MAP' && (
-                <div className="relative h-[620px] w-full">
+                <div className="relative h-[400px] lg:h-[620px] w-full">
                   <IssueMap key={`admin-map-${filterDept}-${filteredIssues.length}`} issues={filteredIssues} />
                 </div>
               )}
@@ -527,7 +527,7 @@ export const AdminPortal: React.FC = () => {
                     const canMarkInProgress = !!selectedStage && selectedStage !== 'Resolved';
 
                     return (
-                      <div key={issue.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5">
+                      <div key={issue.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 space-y-4">
                         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
                           <div className="space-y-2 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -544,7 +544,7 @@ export const AdminPortal: React.FC = () => {
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full xl:max-w-[460px]">
-                            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Assigned Staff</p>
                               <p className="text-sm font-semibold text-slate-900">{issue.staff.name}</p>
                               <p className="text-xs text-slate-500">{issue.staff.title}</p>
@@ -552,7 +552,7 @@ export const AdminPortal: React.FC = () => {
                               <p className="text-[10px] text-slate-400">{issue.staff.email}</p>
                             </div>
 
-                            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Progress</p>
                                 <span className="text-xs font-semibold text-slate-900">{currentProgress.percent}%</span>
@@ -568,7 +568,7 @@ export const AdminPortal: React.FC = () => {
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                           {reportedIssuesTab !== 'closed' && (
-                            <div className="lg:col-span-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div className="lg:col-span-2 rounded-xl bg-slate-50 border border-slate-100 p-3">
                               <div className="flex items-center justify-between mb-3">
                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Progress Tracking</p>
                                 <span className="text-[10px] text-slate-500">Last update {new Date(currentProgress.updatedAt).toLocaleString()}</span>
@@ -578,7 +578,7 @@ export const AdminPortal: React.FC = () => {
                                   <button
                                     key={stage}
                                     onClick={() => setSelectedStageByIssue((prev) => ({ ...prev, [issue.id]: stage }))}
-                                    className={`px-3 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest border transition-all ${selectedStage === stage ? 'bg-slate-900 text-white border-slate-900' : currentProgress.stage === stage ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest border transition-all ${selectedStage === stage ? 'bg-slate-900 text-white border-slate-900' : currentProgress.stage === stage ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
                                   >
                                     {stage}
                                   </button>
@@ -588,12 +588,12 @@ export const AdminPortal: React.FC = () => {
                                 value={progressDrafts[issue.id] || ''}
                                 onChange={(e) => setProgressDrafts(drafts => ({ ...drafts, [issue.id]: e.target.value }))}
                                 placeholder="Add a short work note before saving the next update..."
-                                className="w-full min-h-[88px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                                className="w-full min-h-[70px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-100"
                               />
                             </div>
                           )}
 
-                          <div className="rounded-2xl border border-slate-100 bg-white p-4 space-y-3">
+                          <div className="rounded-xl border border-slate-100 bg-white p-3 space-y-2">
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Quick Actions</p>
                             {reportedIssuesTab === 'closed' ? (
                               <>
@@ -619,7 +619,7 @@ export const AdminPortal: React.FC = () => {
                                 {!issue.isAssigned && issue.status !== IssueStatus.RESOLVED && (
                                   <button
                                     onClick={() => assignNextStaffMember(issue)}
-                                    className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                                    className="w-full rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                                     title="Assign to next available staff in rotation"
                                   >
                                     <UserCheck className="w-4 h-4" /> Assign to Next Staff
@@ -682,7 +682,7 @@ export const AdminPortal: React.FC = () => {
           </div>
 
           <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-24">
-            <div className="bg-slate-900 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
+            <div className="bg-slate-900 rounded-xl sm:rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden shadow-xl">
               <h4 className="text-[10px] font-semibold uppercase tracking-widest text-blue-400 mb-6">Strategy Engine</h4>
               {aiBriefing ? (
                 <div className="animate-in fade-in zoom-in duration-300">
@@ -698,7 +698,7 @@ export const AdminPortal: React.FC = () => {
                 <button 
                   onClick={handleGetBriefing}
                   disabled={loadingBriefing}
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold text-[11px] uppercase tracking-widest transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold text-[11px] uppercase tracking-widest transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   {loadingBriefing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   <span>{loadingBriefing ? 'Analyzing...' : 'Generate Insight'}</span>
@@ -707,7 +707,7 @@ export const AdminPortal: React.FC = () => {
               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600/10 blur-3xl rounded-full"></div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-sm">
               <h4 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-4">Quick Links</h4>
               <div className="space-y-2">
                 <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 text-xs font-semibold text-slate-700 flex justify-between items-center group transition-all">

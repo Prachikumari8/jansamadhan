@@ -146,48 +146,48 @@ export const ForgotPassword: React.FC = () => {
   const strength = getPasswordStrength(newPassword);
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center p-6 no-scrollbar">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+    <div className="min-h-[calc(100vh-56px)] bg-slate-50 flex items-center justify-center p-4 sm:p-6 no-scrollbar">
+      <div className="w-full max-w-sm sm:max-w-md">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
           
           {/* Success Banner matching reference */}
           {success && step === 2 && (
-            <div className="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center space-x-3 text-emerald-600 animate-in slide-in-from-top-4 duration-300">
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <div className="mx-5 mt-5 p-3 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center space-x-3 text-emerald-600 animate-in slide-in-from-top-4 duration-300">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <p className="text-[10px] font-black uppercase tracking-widest">{success}</p>
             </div>
           )}
 
-          <div className="p-10 space-y-8">
+          <div className="p-6 sm:p-8 space-y-6">
             {step === 1 ? (
               <>
                 <div className="space-y-2">
-                  <Link to="/login" className="inline-flex items-center space-x-2 text-slate-400 hover:text-slate-600 transition-colors mb-4 group">
+                  <Link to="/login" className="inline-flex items-center space-x-2 text-slate-400 hover:text-slate-600 transition-colors mb-3 group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Back to Login</span>
                   </Link>
-                  <h1 className="text-3xl font-black text-slate-900 tracking-tight">Forgot Password?</h1>
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Forgot Password?</h1>
                   <p className="text-slate-500 text-sm font-medium">Enter your registered email address to receive a verification code.</p>
                 </div>
 
                 {error && (
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start space-x-3 text-rose-600 animate-in slide-in-from-top-2">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-start space-x-3 text-rose-600 animate-in slide-in-from-top-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <p className="text-xs font-bold leading-relaxed uppercase tracking-tight">{error}</p>
                   </div>
                 )}
 
-                <form onSubmit={handleSendCode} className="space-y-6">
-                  <div className="space-y-2">
+                <form onSubmit={handleSendCode} className="space-y-5">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email Address</label>
                     <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                       <input 
                         type="email" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com" 
-                        className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl outline-none transition-all font-medium"
+                        className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-transparent focus:border-indigo-600 focus:bg-white rounded-lg outline-none transition-all text-sm font-medium"
                         required
                       />
                     </div>
@@ -196,27 +196,27 @@ export const ForgotPassword: React.FC = () => {
                   <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-14 bg-[#0f172a] text-white font-black rounded-2xl hover:bg-indigo-600 transition-all shadow-xl flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50"
+                    className="w-full h-11 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50 text-sm"
                   >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                       <>
                         <span>Send Verification Code</span>
-                        <ArrowRight className="w-5 h-5" />
+                        <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                 </form>
               </>
             ) : (
-              <form onSubmit={handleResetPassword} className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+              <form onSubmit={handleResetPassword} className="space-y-5 animate-in slide-in-from-right-8 duration-500">
                 {error && (
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start space-x-3 text-rose-600 animate-in slide-in-from-top-2">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-start space-x-3 text-rose-600 animate-in slide-in-from-top-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <p className="text-xs font-bold leading-relaxed uppercase tracking-tight">{error}</p>
                   </div>
                 )}
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex justify-between items-end px-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Code</label>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -224,61 +224,61 @@ export const ForgotPassword: React.FC = () => {
                     </span>
                   </div>
                   <div className="relative">
-                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500" />
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500" />
                     <input 
                       type="text" 
                       maxLength={6}
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="Enter 6-digit code" 
-                      className="w-full h-14 pl-12 pr-4 bg-white border-2 border-indigo-500 rounded-2xl outline-none transition-all font-bold tracking-[0.4em] text-center text-slate-400 placeholder:tracking-normal placeholder:font-medium"
+                      className="w-full h-11 pl-10 pr-4 bg-white border border-indigo-500 rounded-lg outline-none transition-all font-bold tracking-[0.4em] text-center text-slate-400 placeholder:tracking-normal placeholder:font-medium text-sm"
                       required
                     />
                   </div>
-                  <div className="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 flex items-center justify-center space-x-2">
+                  <div className="bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100 flex items-center justify-center space-x-2">
                     <AlertCircle className="w-3 h-3 text-indigo-400" />
                     <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">Check console for the code</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">New Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     <input 
                       type={showPassword ? 'text' : 'password'} 
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••" 
-                      className="w-full h-14 pl-12 pr-12 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl outline-none transition-all font-medium"
+                      className="w-full h-11 pl-10 pr-10 bg-slate-50 border border-transparent focus:border-indigo-600 focus:bg-white rounded-lg outline-none transition-all text-sm font-medium"
                       required
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Confirm New Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     <input 
                       type={showPassword ? 'text' : 'password'} 
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••" 
-                      className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl outline-none transition-all font-medium"
+                      className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-transparent focus:border-indigo-600 focus:bg-white rounded-lg outline-none transition-all text-sm font-medium"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="px-1 space-y-2">
+                <div className="px-1 space-y-1.5">
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Strength</span>
                     <span className={`text-[9px] font-black uppercase tracking-widest ${strength >= 100 ? 'text-emerald-500' : strength >= 50 ? 'text-amber-500' : 'text-slate-400'}`}>
@@ -292,13 +292,13 @@ export const ForgotPassword: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col space-y-6 pt-4">
+                <div className="flex flex-col space-y-4 pt-2">
                   <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-14 bg-[#0f172a] text-white font-black rounded-2xl hover:bg-indigo-600 transition-all shadow-xl flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50"
+                    className="w-full h-11 bg-[#0f172a] text-white font-bold rounded-lg hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50 text-sm"
                   >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Verify & Reset Password</span>}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Verify & Reset Password</span>}
                   </button>
                   
                   <button 
@@ -315,7 +315,7 @@ export const ForgotPassword: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
             Need help? <a href="#" className="text-indigo-600 hover:underline">Contact Support</a>
           </p>

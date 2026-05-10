@@ -244,7 +244,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
             </div>
             
             {/* Grid size restored to the larger version */}
-            <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-2xl mx-auto">
               {Object.entries(CATEGORY_CONFIG).map(([cat, config]) => (
                 <button
                   key={cat}
@@ -252,18 +252,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                     setFormData(p => ({ ...p, category: cat as IssueCategory }));
                     setError(null);
                   }}
-                  className={`aspect-square flex flex-col items-center justify-center p-3 sm:p-4 rounded-[2rem] border-2 transition-all group active:scale-95 ${
+                  className={`aspect-square flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border-2 transition-all group active:scale-95 ${
                     formData.category === cat 
                       ? 'border-blue-600 bg-blue-50 shadow-lg ring-2 ring-blue-100' 
                       : 'border-slate-50 hover:border-slate-200 bg-white'
                   }`}
                 >
-                  {/* Icon container - Size restored to w-12 h-12 */}
-                  <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center text-blue-600 transition-transform group-hover:scale-110 ${config.bgIcon}`}>
-                    <div className="scale-110">{config.symbol}</div>
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full mb-2 flex items-center justify-center text-blue-600 transition-transform group-hover:scale-110 ${config.bgIcon}`}>
+                    <div className="scale-100 sm:scale-110">{config.symbol}</div>
                   </div>
-                  {/* Label - Restored to 11px */}
-                  <h4 className="text-[11px] font-black text-slate-900 text-center leading-tight line-clamp-1 px-1">
+                  <h4 className="text-[10px] sm:text-[11px] font-black text-slate-900 text-center leading-tight line-clamp-1 px-0.5">
                     {getTranslation(currentLanguage, `category_${cat.toLowerCase().replace(' ', '_')}`)}
                   </h4>
                 </button>
@@ -278,7 +276,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                 <input 
                   type="text"
                   placeholder={getTranslation(currentLanguage, 'other_category_placeholder')}
-                  className="w-full h-12 px-5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 transition-all text-sm font-bold shadow-sm"
+                  className="w-full h-10 px-4 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 transition-all text-sm font-bold shadow-sm"
                   value={formData.otherCategory}
                   onChange={(e) => setFormData(p => ({ ...p, otherCategory: e.target.value }))}
                 />
@@ -295,7 +293,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
             </div>
 
             {isVerifyingImage ? (
-              <div className="aspect-square w-full rounded-[2.5rem] bg-slate-900 flex flex-col items-center justify-center space-y-4 shadow-2xl">
+              <div className="aspect-square w-full rounded-xl bg-slate-900 flex flex-col items-center justify-center space-y-4 shadow-xl">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
                   <ShieldCheck className="absolute inset-0 m-auto w-6 h-6 text-blue-600 animate-pulse" />
@@ -307,7 +305,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               </div>
             ) : isCameraActive ? (
               <div className="space-y-4">
-                <div className="relative aspect-square w-full rounded-[2.5rem] overflow-hidden bg-slate-900 border-2 border-blue-600 shadow-2xl">
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-900 border-2 border-blue-600 shadow-xl">
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-6 flex justify-center">
                     <button 
@@ -322,13 +320,13 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                 <canvas ref={canvasRef} className="hidden" />
               </div>
             ) : formData.photo ? (
-              <div className="relative aspect-square w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl group">
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden border border-slate-200 shadow-lg group">
                 <img src={formData.photo} className="w-full h-full object-cover" alt="Captured Evidence" />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <button 
                     onClick={() => { setIsCameraActive(true); setFormData(p => ({ ...p, photo: null, aiAnalysis: null })); }}
-                    className="p-3 bg-white/90 backdrop-blur rounded-2xl shadow-lg text-slate-600 hover:text-blue-600 transition-all active:scale-95"
+                    className="p-2 bg-white/90 backdrop-blur rounded-lg shadow-lg text-slate-600 hover:text-blue-600 transition-all active:scale-95"
                   >
                     <RefreshCcw className="w-4 h-4" />
                   </button>
@@ -339,7 +337,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => setIsCameraActive(true)}
-                  className="flex flex-col items-center justify-center p-6 bg-blue-50 border-2 border-dashed border-blue-200 rounded-3xl text-blue-600 hover:bg-blue-100 transition-all group active:scale-95 shadow-sm"
+                  className="flex flex-col items-center justify-center p-4 sm:p-5 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl text-blue-600 hover:bg-blue-100 transition-all group active:scale-95 shadow-sm"
                 >
                   <Camera className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Camera</span>
@@ -347,7 +345,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                 
                 <button 
                   onClick={() => galleryInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 hover:bg-slate-100 transition-all group active:scale-95 shadow-sm"
+                  className="flex flex-col items-center justify-center p-4 sm:p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:bg-slate-100 transition-all group active:scale-95 shadow-sm"
                 >
                   <ImageIcon className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform group-hover:text-slate-600" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Gallery</span>
@@ -357,18 +355,18 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
             <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handleGalleryUpload} />
 
             {error && (
-              <div className="mt-6 p-6 bg-rose-50 rounded-3xl border border-rose-100 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button 
                     onClick={() => { setError(null); setIsCameraActive(true); }}
-                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Try Camera Again</span>
                   </button>
                   <button 
                     onClick={() => { setError(null); galleryInputRef.current?.click(); }}
-                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-rose-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 transition-all"
                   >
                     <ImageIcon className="w-4 h-4" />
                     <span>Open Gallery</span>
@@ -395,7 +393,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                       setError("Manual review requested. Moving to next step...");
                       setTimeout(() => { setError(null); setCurrentStep(3); }, 1500);
                     }}
-                    className="sm:col-span-2 flex items-center justify-center space-x-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+                    className="sm:col-span-2 flex items-center justify-center space-x-2 px-4 py-3 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
                   >
                     <UserCheck className="w-4 h-4" />
                     <span>Request Manual Review</span>
@@ -413,7 +411,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               <p className="text-[12px] font-medium text-slate-500">Review and finalize your report details.</p>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-3 shadow-sm">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2 shadow-sm">
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-blue-600" />
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirmed Location</span>
@@ -433,7 +431,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Describe Issue</label>
                 <textarea 
                   placeholder="Brief context to help our team..."
-                  className="w-full h-32 p-6 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-medium resize-none shadow-sm"
+                  className="w-full h-24 p-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-medium resize-none shadow-sm"
                   value={formData.description}
                   onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
                 />
@@ -446,7 +444,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
                   <input 
                     type="text"
                     placeholder="Anonymous"
-                    className="w-full h-12 pl-12 pr-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 transition-all text-sm font-bold"
+                    className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 outline-none focus:border-blue-600 transition-all text-sm font-bold"
                     value={formData.reporterName}
                     onChange={(e) => setFormData(p => ({ ...p, reporterName: e.target.value }))}
                   />
@@ -454,7 +452,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               </div>
             </div>
 
-            <div className="p-6 bg-slate-900 rounded-[2rem] border border-white/5 flex items-start space-x-4 shadow-2xl">
+            <div className="p-4 bg-slate-900 rounded-xl border border-white/5 flex items-start space-x-3 shadow-xl">
               <ShieldCheck className="w-6 h-6 text-emerald-400 mt-0.5 shrink-0" />
               <p className="text-[11px] font-medium text-slate-300 leading-relaxed">
                 <span className="text-white font-bold">AI Active.</span> Your report is being processed through automated verification systems.
@@ -466,20 +464,20 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
 
       {/* Modern Error Toast */}
       {error && (
-        <div className="absolute bottom-28 left-6 right-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center space-x-3 text-rose-600 animate-in slide-in-from-bottom-2 z-[100] shadow-xl">
+        <div className="absolute bottom-24 left-4 right-4 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center space-x-3 text-rose-600 animate-in slide-in-from-bottom-2 z-[100] shadow-lg">
           <AlertCircle className="w-6 h-6 shrink-0" />
           <p className="text-[11px] font-black uppercase tracking-wider">{error}</p>
         </div>
       )}
 
       {/* Fixed Action Footer */}
-      <div className="p-6 border-t border-slate-100 bg-white z-[110] backdrop-blur-md">
-        <div className="flex space-x-3 max-w-2xl mx-auto">
+      <div className="p-4 border-t border-slate-100 bg-white z-[110] backdrop-blur-md">
+        <div className="flex space-x-2 max-w-2xl mx-auto">
           {currentStep > 1 && (
             <button 
               onClick={handleBack}
               disabled={submitting}
-              className="w-16 h-16 flex items-center justify-center rounded-2xl border-2 border-slate-100 text-slate-400 hover:text-slate-900 transition-all active:scale-95"
+              className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-slate-900 transition-all active:scale-95"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -488,7 +486,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
           <button 
             onClick={currentStep === 3 ? handleFinalSubmit : handleNext}
             disabled={submitting || isVerifyingImage || (currentStep === 3 && isGeocoding)}
-            className={`flex-1 flex items-center justify-center space-x-3 h-16 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] disabled:opacity-50 ${
+            className={`flex-1 flex items-center justify-center space-x-2 h-11 rounded-lg font-bold uppercase text-[11px] tracking-[0.15em] transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 ${
               currentStep === 3 ? 'bg-slate-900 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
