@@ -217,7 +217,8 @@ export const useStore = () => {
       id: 'u_' + Math.random().toString(36).substr(2, 5),
       name: email.split('@')[0],
       email,
-      role: resolvedRole
+      role: resolvedRole,
+      joinedAt: new Date().toISOString()
     };
     setUser(user);
     return user;
@@ -231,7 +232,8 @@ export const useStore = () => {
       email,
       phone,
       role: resolvedRole,
-      staffCategory: resolvedRole === 'STAFF' ? staffCategory : undefined
+      staffCategory: resolvedRole === 'STAFF' ? staffCategory : undefined,
+      joinedAt: new Date().toISOString()
     };
     setUser(user);
     

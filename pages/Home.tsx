@@ -113,16 +113,7 @@ export const Home: React.FC = () => {
             {copy.hero_sub}
           </p>
 
-          <Link
-            to="/report"
-            className="inline-flex items-center h-10 sm:h-11 bg-slate-950 text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg px-6 sm:px-8 group uppercase tracking-[0.15em] text-[10px]"
-          >
-            <PlusCircle className="w-4 h-4 mr-2 sm:mr-3" />
-            <span className="mt-0.5">{copy.report_issue}</span>
-            <ArrowRight className="w-4 h-4 ml-3 sm:ml-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-
-          <div className="max-w-2xl mx-auto mt-8 sm:mt-10 relative">
+          <div className="max-w-2xl mx-auto relative">
             <form
               onSubmit={handleSearch}
               className="relative flex items-center w-full h-11 sm:h-12 rounded-xl focus-within:shadow-lg focus-within:border-blue-300 bg-white overflow-hidden border border-slate-200 transition-all"
@@ -146,6 +137,15 @@ export const Home: React.FC = () => {
               </button>
             </form>
           </div>
+
+          <Link
+            to="/report"
+            className="inline-flex items-center h-10 sm:h-11 bg-slate-950 text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg px-6 sm:px-8 group uppercase tracking-[0.15em] text-[10px] mt-8 sm:mt-10"
+          >
+            <PlusCircle className="w-4 h-4 mr-2 sm:mr-3" />
+            <span className="mt-0.5">{copy.report_issue}</span>
+            <ArrowRight className="w-4 h-4 ml-3 sm:ml-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
       </section>
 

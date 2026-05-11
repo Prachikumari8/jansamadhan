@@ -107,4 +107,5 @@ export interface User {
   avatar?: string;
   phone?: string;
   staffCategory?: string; // Category for STAFF role (e.g., 'Pothole', 'Streetlight', etc.)
+  joinedAt?: string; // ISO date string of when the user joined
 }
