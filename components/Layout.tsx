@@ -63,15 +63,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </nav>
 
               <div className="flex items-center space-x-2 border-l border-slate-100 pl-3 ml-1">
-                <label className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors">
-                  <span className="hidden sm:inline">{copy.language_label}</span>
+                <label className="flex items-center gap-2 rounded-lg bg-slate-900 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white border border-white/10 shadow-lg cursor-pointer hover:bg-blue-600 transition-all group">
+                  <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center shrink-0 group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                    <span className="text-[10px]">EN</span>
+                  </div>
                   <select
                     value={currentLanguage}
                     onChange={(e) => setLanguage(e.target.value as typeof currentLanguage)}
-                    className="bg-transparent text-slate-700 outline-none text-xs"
+                    className="bg-transparent text-white outline-none text-[10px] font-bold cursor-pointer pr-1"
                   >
                     {languages.map((language) => (
-                      <option key={language.code} value={language.code}>{language.native}</option>
+                      <option key={language.code} value={language.code} className="bg-slate-900 text-white">{language.native}</option>
                     ))}
                   </select>
                 </label>

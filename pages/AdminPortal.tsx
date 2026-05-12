@@ -34,14 +34,15 @@ import {
   Home,
   Menu,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
 import { generateCityBriefing } from '../services/geminiService.ts';
 import { getTranslation } from '../services/i18n';
 
 export const AdminPortal: React.FC = () => {
-  const { issues, currentUser, updateIssueProgress, getRegisteredStaffByCategory, getNextStaffForCategory, getStaffRotationState, currentLanguage } = useStore();
+  const { issues, currentUser, updateIssueProgress, getRegisteredStaffByCategory, getNextStaffForCategory, getStaffRotationState, currentLanguage, removeStaff, updateStaffCategory } = useStore();
   const navigate = useNavigate();
 
   // Redirect if not authorized
@@ -411,7 +412,7 @@ export const AdminPortal: React.FC = () => {
 
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
-          <div className="lg:col-span-9 space-y-5 sm:space-y-6">
+          <div className="lg:col-span-12 space-y-5 sm:space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {activeView === 'MAP' && (
               <div className="md:col-span-2 xl:col-span-4 bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 min-h-[500px] lg:min-h-[680px] h-full">
@@ -447,14 +448,43 @@ export const AdminPortal: React.FC = () => {
                         {isOpen && (
                           <div className="bg-white p-3 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-50 space-y-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f8fafc' }}>
                             {allStaff.map((staff) => (
-                              <div key={staff.email} className="flex items-center gap-3 rounded-lg p-3 border border-slate-100 hover:shadow-sm">
-                                <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">{staff.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-semibold text-slate-800 truncate">{staff.name}</p>
-                                  <p className="text-xs text-slate-500 truncate">{staff.title} • <span className="font-medium">{staff.shift}</span></p>
-                                  <p className="text-xs text-slate-400">{staff.phone}</p>
+                              <div key={staff.email} className="group/staff flex items-center gap-3 rounded-xl p-3 border border-slate-100 bg-white hover:border-blue-200 hover:shadow-md transition-all">
+                                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-sm font-black text-slate-700 shadow-sm group-hover/staff:bg-blue-600 group-hover/staff:text-white transition-colors">
+                                  {staff.name.split(' ').map(n=>n[0]).slice(0,2).join('')}
                                 </div>
-                                {'userId' in staff && <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap font-semibold">NEW</span>}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-slate-800 truncate">{staff.name}</p>
+                                    {'userId' in staff && <span className="text-[7px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Member</span>}
+                                  </div>
+                                  <p className="text-[10px] text-slate-500 truncate font-medium">{staff.title} • <span className="text-slate-400 font-normal">{staff.shift}</span></p>
+                                  <p className="text-[10px] text-slate-400">{staff.phone}</p>
+                                </div>
+
+                                {'userId' in staff && (
+                                  <div className="flex items-center gap-1.5 opacity-0 group-hover/staff:opacity-100 transition-opacity">
+                                    <select
+                                      onChange={(e) => updateStaffCategory(staff.email, e.target.value)}
+                                      className="text-[9px] font-bold bg-slate-50 border border-slate-200 rounded px-1 py-0.5 outline-none hover:border-blue-400 transition-colors"
+                                      defaultValue={category}
+                                    >
+                                      {Object.values(IssueCategory).map(cat => (
+                                        <option key={cat} value={cat}>{cat.split(' ')[0]}</option>
+                                      ))}
+                                    </select>
+                                    <button 
+                                      onClick={() => {
+                                        if(window.confirm(`Remove ${staff.name} from the staff directory?`)) {
+                                          removeStaff(staff.email);
+                                        }
+                                      }}
+                                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                      title="Remove Staff"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -676,49 +706,6 @@ export const AdminPortal: React.FC = () => {
                 )}
                 </div>
               )}
-
-                {/* Analytics view removed */}
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-24">
-            <div className="bg-slate-900 rounded-xl sm:rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden shadow-xl">
-              <h4 className="text-[10px] font-semibold uppercase tracking-widest text-blue-400 mb-6">Strategy Engine</h4>
-              {aiBriefing ? (
-                <div className="animate-in fade-in zoom-in duration-300">
-                  <p className="text-xs text-slate-300 leading-relaxed italic">"{aiBriefing}"</p>
-                  <button 
-                    onClick={() => setAiBriefing(null)} 
-                    className="mt-6 text-[9px] font-bold text-blue-400 uppercase tracking-widest hover:text-white transition-colors"
-                  >
-                    Clear Strategy
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleGetBriefing}
-                  disabled={loadingBriefing}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold text-[11px] uppercase tracking-widest transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
-                >
-                  {loadingBriefing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  <span>{loadingBriefing ? 'Analyzing...' : 'Generate Insight'}</span>
-                </button>
-              )}
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600/10 blur-3xl rounded-full"></div>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-sm">
-              <h4 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-4">Quick Links</h4>
-              <div className="space-y-2">
-                <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 text-xs font-semibold text-slate-700 flex justify-between items-center group transition-all">
-                  <span>Export JSON Report</span>
-                  <Download className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500" />
-                </button>
-                <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 text-xs font-semibold text-slate-700 flex justify-between items-center group transition-all">
-                  <span>Contact Field Ops</span>
-                  <Navigation className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500" />
-                </button>
-              </div>
             </div>
           </div>
         </div>

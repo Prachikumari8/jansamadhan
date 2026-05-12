@@ -262,6 +262,20 @@ export const useStore = () => {
     return globalStaffMembers.filter(m => m.category === category).map(({ userId, category, ...staff }) => ({ ...staff, userId }));
   };
 
+  const removeStaff = (email: string) => {
+    globalStaffMembers = globalStaffMembers.filter(m => m.email !== email);
+    saveToStorage();
+    notify();
+  };
+
+  const updateStaffCategory = (email: string, newCategory: string) => {
+    globalStaffMembers = globalStaffMembers.map(m => 
+      m.email === email ? { ...m, category: newCategory } : m
+    );
+    saveToStorage();
+    notify();
+  };
+
   /**
    * Get next staff member in round-robin sequence for a category.
    * Cycles through available staff based on assignment history.
@@ -311,6 +325,8 @@ export const useStore = () => {
     login, 
     signup,
     getRegisteredStaffByCategory,
+    removeStaff,
+    updateStaffCategory,
     getNextStaffForCategory,
     getStaffRotationState,
     setLanguage

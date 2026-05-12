@@ -197,9 +197,24 @@ export const Dashboard: React.FC = () => {
               onClick={() => setSelectedIssue(issue)}
             >
               <div className="flex flex-row items-stretch">
-                <div className="w-20 sm:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
+                <div className="w-20 sm:w-36 shrink-0 bg-slate-100 relative overflow-hidden border-r border-slate-50 flex items-center justify-center">
                   {issue.photoUrl ? (
-                    <img src={issue.photoUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Evidence" />
+                    <>
+                      <div className="absolute inset-0 bg-slate-200 animate-pulse" />
+                      <img 
+                        src={issue.photoUrl} 
+                        className="w-full h-full object-cover relative z-10 transition-transform duration-500 group-hover:scale-105" 
+                        alt="Evidence"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="fallback-icon hidden absolute inset-0 flex items-center justify-center text-slate-300">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                       <ImageIcon className="w-5 h-5" />

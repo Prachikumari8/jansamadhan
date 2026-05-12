@@ -138,7 +138,8 @@ export const ReportPage: React.FC = () => {
             address: data.manualAddress || detectedAddress?.fullAddress || 'Detected Location',
             details: detectedAddress || undefined
           },
-          photoUrl: result.data.report.imageUrl, // Real Drive URL from backend
+          // Fallback to local base64 photo if backend image upload failed/is empty
+          photoUrl: result.data.report.imageUrl || data.photo, 
           reportedBy: data.reporterName || currentUser?.name || 'Anonymous Citizen',
           priority: data.suggestedPriority || data.priority || 'Medium'
         });
@@ -158,6 +159,11 @@ export const ReportPage: React.FC = () => {
   };
 
   const handleConfirmLocation = () => {
+    if (!currentUser) {
+      alert("Please login or sign in first to report an issue.");
+      navigate('/login');
+      return;
+    }
     setIsConfirmed(true);
   };
 

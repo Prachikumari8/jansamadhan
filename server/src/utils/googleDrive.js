@@ -63,7 +63,7 @@ export const uploadFileToDrive = async (file) => {
     // The format 'https://drive.google.com/uc?id={fileId}' allows direct display in <img> tags
     return {
       id: fileId,
-      link: `https://drive.google.com/uc?export=view&id=${fileId}`,
+      link: `https://drive.google.com/uc?id=${fileId}`,
     };
   } catch (error) {
     console.error('Google Drive Upload Error:', error);

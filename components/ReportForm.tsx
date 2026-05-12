@@ -337,18 +337,24 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => setIsCameraActive(true)}
-                  className="flex flex-col items-center justify-center p-4 sm:p-5 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl text-blue-600 hover:bg-blue-100 transition-all group active:scale-95 shadow-sm"
+                  className="flex flex-col items-center justify-center p-6 bg-slate-950 text-white rounded-2xl border border-white/10 shadow-2xl transition-all group active:scale-95 hover:bg-blue-600"
                 >
-                  <Camera className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Camera</span>
+                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                    <Camera className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 group-hover:text-white transition-colors">Source</span>
+                  <span className="text-xs font-bold uppercase tracking-tight">Camera</span>
                 </button>
                 
                 <button 
                   onClick={() => galleryInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center p-4 sm:p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:bg-slate-100 transition-all group active:scale-95 shadow-sm"
+                  className="flex flex-col items-center justify-center p-6 bg-slate-950 text-white rounded-2xl border border-white/10 shadow-2xl transition-all group active:scale-95 hover:bg-blue-600"
                 >
-                  <ImageIcon className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform group-hover:text-slate-600" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Gallery</span>
+                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                    <ImageIcon className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 group-hover:text-white transition-colors">Select</span>
+                  <span className="text-xs font-bold uppercase tracking-tight">Gallery</span>
                 </button>
               </div>
             )}
@@ -477,30 +483,29 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, addr
             <button 
               onClick={handleBack}
               disabled={submitting}
-              className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-slate-900 transition-all active:scale-95"
+              className="w-14 h-14 flex items-center justify-center rounded-xl bg-slate-950 text-white border border-white/10 hover:bg-slate-800 transition-all shadow-xl active:scale-95 group shrink-0"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                <ChevronLeft className="w-6 h-6" />
+              </div>
             </button>
           )}
           
           <button 
             onClick={currentStep === 3 ? handleFinalSubmit : handleNext}
             disabled={submitting || isVerifyingImage || (currentStep === 3 && isGeocoding)}
-            className={`flex-1 flex items-center justify-center space-x-2 h-11 rounded-lg font-bold uppercase text-[11px] tracking-[0.15em] transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 ${
-              currentStep === 3 ? 'bg-slate-900 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
+            className={`group flex-1 flex items-center space-x-3 px-6 h-14 bg-slate-950 text-white rounded-xl shadow-2xl transition-all active:scale-[0.98] disabled:opacity-50 border border-white/10 hover:bg-blue-600`}
           >
-            {submitting ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span>Syncing Data</span>
-              </>
-            ) : (
-              <>
-                <span>{currentStep === 3 ? 'Submit Report' : getTranslation(currentLanguage, 'continue_button')}</span>
-                {currentStep < 3 ? <ArrowRight className="w-5 h-5" /> : <Send className="w-5 h-5" />}
-              </>
-            )}
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg group-hover:bg-white group-hover:text-blue-600 transition-colors shrink-0">
+              {currentStep === 3 ? <Send className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+            </div>
+            <div className="text-left flex-1 overflow-hidden">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Step {currentStep}: {currentStep === 3 ? 'Finalize' : 'Next'}</p>
+              <p className="text-[11px] font-bold uppercase tracking-tight truncate">
+                {submitting ? 'Syncing Data...' : currentStep === 3 ? 'Submit Report' : getTranslation(currentLanguage, 'continue_button')}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-1 group-hover:opacity-100 transition-all ml-1 shrink-0" />
           </button>
         </div>
       </div>
