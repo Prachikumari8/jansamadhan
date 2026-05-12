@@ -13,6 +13,12 @@ export const ReportPage: React.FC = () => {
   const { addIssue, currentUser } = useStore();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/login');
+    }
+  }, [currentUser, navigate]);
+
   // Mode state: false = Full Map, true = Split View / Mobile Overlay
   const [isConfirmed, setIsConfirmed] = useState(false);
   const hasAttemptedInitialLocate = useRef(false);
@@ -23,6 +29,7 @@ export const ReportPage: React.FC = () => {
   const [userAccuracy, setUserAccuracy] = useState<number | undefined>(undefined);
   const [detectedAddress, setDetectedAddress] = useState<AddressDetails | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (hasAttemptedInitialLocate.current) return;
@@ -89,8 +96,10 @@ export const ReportPage: React.FC = () => {
   }, []);
 
   const handleFormSubmit = async (data: any) => {
+    if (loading) return;
     const finalLocation = markerPosition || userLocation || DEFAULT_COORDS;
 
+    setLoading(true);
     try {
       // 1. Prepare FormData for multipart upload
       const formData = new FormData();
@@ -112,7 +121,7 @@ export const ReportPage: React.FC = () => {
       
       if (!token) {
         alert("Your session has expired. Please log out and log in again to submit a report.");
-        setLoading(false); // If you have a loading state
+        setLoading(false);
         return;
       }
 
@@ -150,6 +159,8 @@ export const ReportPage: React.FC = () => {
     } catch (err) {
       console.error("Submission error:", err);
       alert("Error connecting to server. Check if backend is running.");
+    } finally {
+      setLoading(false);
     }
   };
 

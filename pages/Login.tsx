@@ -35,7 +35,7 @@ export const Login: React.FC = () => {
           } else {
             login(user.email, user.role);
           }
-          navigate(user.role === 'CITIZEN' ? '/dashboard' : '/admin');
+          navigate(user.role === 'ADMIN' ? '/admin' : '/dashboard');
         } else {
           setError(data.message || "Google login failed.");
         }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore.ts';
 import { 
   MapPin, 
@@ -17,7 +17,9 @@ import {
   User,
   Building2,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Activity,
+  Check
 } from 'lucide-react';
 import { IssueStatus, Issue, IssueCategory } from '../types.ts';
 import { DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
@@ -102,10 +104,20 @@ const getIssueProgress = (issue: Issue) => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { issues = [], currentUser, currentLanguage } = useStore();
+  const { issues = [], currentUser, currentLanguage, updateIssueProgress } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Staff Portal State
+  const [staffProgressNote, setStaffProgressNote] = useState<string>('');
+  const [staffSelectedStage, setStaffSelectedStage] = useState<typeof ISSUE_PROGRESS_STAGES[number] | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const stats = useMemo(() => {
     const total = issues.length;
@@ -113,6 +125,36 @@ export const Dashboard: React.FC = () => {
     const pending = total - resolved;
     return { total, resolved, pending };
   }, [issues]);
+
+  const assignedToCurrentStaff = useMemo(() => {
+    if (currentUser?.role !== 'STAFF' || !currentUser?.name) return [];
+    return issues.filter(issue => issue.assignedStaff?.name === currentUser.name && issue.status !== IssueStatus.RESOLVED);
+  }, [issues, currentUser]);
+
+  const getStagePercent = (stage: typeof ISSUE_PROGRESS_STAGES[number]) => {
+    const stageMap: Record<typeof ISSUE_PROGRESS_STAGES[number], number> = {
+      Reported: 20,
+      Surveyed: 35,
+      Assigned: 50,
+      'In Progress': 70,
+      Verification: 85,
+      Resolved: 100
+    };
+    return stageMap[stage];
+  };
+
+  const submitStaffProgressUpdate = (issue: Issue) => {
+    if (!staffSelectedStage || !staffProgressNote.trim()) return;
+    updateIssueProgress(issue.id, {
+      stage: staffSelectedStage,
+      percent: getStagePercent(staffSelectedStage),
+      note: staffProgressNote,
+      updatedBy: currentUser?.name || 'Unknown Staff',
+      assignedStaff: issue.assignedStaff
+    });
+    setStaffProgressNote('');
+    setStaffSelectedStage(null);
+  };
 
   const filteredIssues = useMemo(() => {
     return issues.filter(issue => {
@@ -122,6 +164,144 @@ export const Dashboard: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [issues, searchTerm, filterCategory]);
+
+  if (currentUser?.role === 'STAFF') {
+    const resolvedCount = issues.filter(i => i.assignedStaff?.name === currentUser.name && i.status === IssueStatus.RESOLVED).length;
+    
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sticky top-0 z-[100] shadow-sm backdrop-blur-md bg-white/90">
+          <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center text-white shrink-0 shadow">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-lg font-semibold text-slate-900 tracking-tight">Staff Workspace</h1>
+                  <span className="bg-emerald-600 text-[9px] text-white font-semibold px-1.5 py-0.5 rounded tracking-widest uppercase">Direct Assignment</span>
+                </div>
+                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">
+                  {currentTime.toLocaleTimeString('en-IN', { hour12: false })} • {currentUser?.name}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 pb-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Active Tasks</p>
+              <p className="text-2xl font-black text-slate-900">{assignedToCurrentStaff.length}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Work in Progress</p>
+              <p className="text-2xl font-black text-indigo-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.IN_PROGRESS).length}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Pending Review</p>
+              <p className="text-2xl font-black text-amber-600">{assignedToCurrentStaff.filter(i => i.status === IssueStatus.REPORTED).length}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Jobs Completed</p>
+              <p className="text-2xl font-black text-emerald-600">{resolvedCount}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {assignedToCurrentStaff.length > 0 ? (
+              assignedToCurrentStaff.map((issue) => {
+                const latestProgress = issue.progressUpdates?.[issue.progressUpdates.length - 1];
+                const currentProgress = latestProgress || {
+                  stage: issue.status === IssueStatus.IN_PROGRESS ? 'In Progress' : 'Reported',
+                  percent: issue.status === IssueStatus.IN_PROGRESS ? 60 : 20,
+                  note: 'Work assigned to you',
+                  updatedAt: issue.reportedAt,
+                  updatedBy: 'Admin'
+                };
+
+                return (
+                  <div key={issue.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3">
+                    <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+                      <div className="space-y-2 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">{issue.category}</span>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            issue.status === IssueStatus.REPORTED ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                            issue.status === IssueStatus.IN_PROGRESS ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                            'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}>
+                            {issue.status}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-900">{issue.description}</h3>
+                        <p className="text-xs text-slate-500">{issue.location.address || 'No address provided'}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Progress</p>
+                        <p className="text-sm font-semibold text-slate-900 mb-1">{currentProgress.stage}</p>
+                        <div className="h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
+                          <div className="h-full rounded-full bg-blue-600" style={{ width: `${currentProgress.percent}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-500">{currentProgress.percent}% Complete</p>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Last Updated</p>
+                        <p className="text-sm font-semibold text-slate-900">{new Date(currentProgress.updatedAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-500 mt-1">{currentProgress.note}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 space-y-2">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Update Progress</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {ISSUE_PROGRESS_STAGES.map((stage) => (
+                          <button
+                            key={stage}
+                            onClick={() => setStaffSelectedStage(stage)}
+                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest border transition-all ${
+                              staffSelectedStage === stage
+                                ? 'bg-slate-900 text-white border-slate-900'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                            }`}
+                          >
+                            {stage}
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={staffProgressNote}
+                        onChange={(e) => setStaffProgressNote(e.target.value)}
+                        placeholder="Add a note about your progress..."
+                        className="w-full min-h-[70px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                      <button
+                        onClick={() => submitStaffProgressUpdate(issue)}
+                        disabled={!staffSelectedStage || !staffProgressNote.trim()}
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-widest transition-colors"
+                      >
+                        <Check className="w-4 h-4 inline mr-2" /> Submit Progress Update
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
+                <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-600 font-medium">No work assigned to you yet</p>
+                <p className="text-slate-500 text-sm mt-2">Check back later for assigned issues</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 no-scrollbar">

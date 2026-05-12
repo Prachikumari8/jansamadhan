@@ -36,6 +36,7 @@ const INITIAL_ISSUES: Issue[] = [
 
 let globalIssues: Issue[] = [];
 let globalUser: User | null = null;
+let globalUsers: User[] = [];
 let globalStaffMembers: (StaffMember & { userId: string; category: string })[] = [];
 let globalLanguage: LanguageCode = defaultLanguage;
 let listeners: (() => void)[] = [];
@@ -67,6 +68,7 @@ const saveToStorage = () => {
   try {
     localStorage.setItem('jan_samadhan_v2_issues', JSON.stringify(globalIssues));
     localStorage.setItem('jan_samadhan_v2_staff', JSON.stringify(globalStaffMembers));
+    localStorage.setItem('jan_samadhan_v2_users', JSON.stringify(globalUsers));
     localStorage.setItem('jan_samadhan_v2_assignment_index', JSON.stringify(staffAssignmentIndex));
     localStorage.setItem('jan_samadhan_v2_language', globalLanguage);
     if (globalUser) {
@@ -87,8 +89,63 @@ const loadFromStorage = () => {
     const savedStaff = localStorage.getItem('jan_samadhan_v2_staff');
     globalStaffMembers = savedStaff ? JSON.parse(savedStaff) : [];
 
+    const savedUsers = localStorage.getItem('jan_samadhan_v2_users');
+    globalUsers = savedUsers ? JSON.parse(savedUsers) : [];
+
     const savedUser = localStorage.getItem('jan_samadhan_v2_user');
     globalUser = savedUser ? JSON.parse(savedUser) : null;
+
+    // DATA MIGRATION: If globalUsers is empty but we have staff or a current user, populate it
+    if (globalUsers.length === 0) {
+      const uniqueUsers = new Map<string, User>();
+      
+      // Add current user if exists
+      if (globalUser) {
+        uniqueUsers.set(globalUser.email, globalUser);
+      }
+      
+      // Add all staff members
+      globalStaffMembers.forEach(staff => {
+        if (!uniqueUsers.has(staff.email)) {
+          uniqueUsers.set(staff.email, {
+            id: staff.userId || ('u_' + Math.random().toString(36).substr(2, 5)),
+            name: staff.name,
+            email: staff.email,
+            phone: staff.phone,
+            role: 'STAFF',
+            staffCategory: staff.category,
+            staffArea: staff.area,
+            staffPincode: staff.pincode,
+            staffCity: staff.city,
+            staffDistrict: staff.district,
+            staffState: staff.state,
+            joinedAt: new Date().toISOString()
+          });
+        }
+      });
+
+      // NEW: Scan issues for unique reporters to recover citizens
+      globalIssues.forEach(issue => {
+        const reporter = issue.reportedBy || 'Unknown';
+        // Check if reporter is an email or just a name
+        const email = reporter.includes('@') ? reporter : `${reporter.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+        
+        if (!uniqueUsers.has(email)) {
+          uniqueUsers.set(email, {
+            id: 'u_' + Math.random().toString(36).substr(2, 5),
+            name: reporter,
+            email: email,
+            role: 'CITIZEN',
+            joinedAt: issue.reportedAt ? issue.reportedAt.toISOString() : new Date().toISOString()
+          });
+        }
+      });
+
+      globalUsers = Array.from(uniqueUsers.values());
+      if (globalUsers.length > 0) {
+        localStorage.setItem('jan_samadhan_v2_users', JSON.stringify(globalUsers));
+      }
+    }
 
     const savedLanguage = localStorage.getItem('jan_samadhan_v2_language') as LanguageCode | null;
     globalLanguage = savedLanguage || defaultLanguage;
@@ -104,14 +161,18 @@ const loadFromStorage = () => {
 
 loadFromStorage();
 
+const MAX_ACTIVE_ISSUES = 3;
+
 export const useStore = () => {
   const [issues, setIssues] = useState<Issue[]>(globalIssues);
+  const [users, setUsers] = useState<User[]>(globalUsers);
   const [currentUser, setCurrentUser] = useState<User | null>(globalUser);
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(globalLanguage);
 
   useEffect(() => {
     const handleChange = () => {
       setIssues([...globalIssues]);
+      setUsers([...globalUsers]);
       setCurrentUser(globalUser ? { ...globalUser } : null);
       setCurrentLanguage(globalLanguage);
     };
@@ -119,14 +180,62 @@ export const useStore = () => {
     return () => { listeners = listeners.filter(l => l !== handleChange); };
   }, []);
 
+  const autoAssignStaff = (issue: Issue): Issue => {
+    // 1. Identify potential staff by Category and Area
+    // We check if the staff's area is mentioned in the issue address (case-insensitive)
+    const issueAddress = (issue.location.address || "").toLowerCase();
+    
+    const potentialStaff = globalStaffMembers.filter(m => {
+      const isSameCategory = m.category === issue.category;
+      const isSameArea = m.area && issueAddress.includes(m.area.toLowerCase());
+      return isSameCategory && isSameArea;
+    });
+
+    // 2. Find a staff member with capacity
+    for (const staff of potentialStaff) {
+      const activeWorkload = globalIssues.filter(i => 
+        i.assignedStaff?.email === staff.email && 
+        i.status !== IssueStatus.RESOLVED
+      ).length;
+
+      if (activeWorkload < MAX_ACTIVE_ISSUES) {
+        // Found a free staff member in the same area
+        return {
+          ...issue,
+          status: IssueStatus.IN_PROGRESS,
+          assignedStaff: { ...staff },
+          progressUpdates: [
+            ...(issue.progressUpdates || []),
+            {
+              id: 'prog_' + Math.random().toString(36).substr(2, 7),
+              stage: 'Assigned',
+              note: `Automatically assigned to ${staff.name} (${staff.area} Division)`,
+              percent: 50,
+              updatedAt: new Date(),
+              updatedBy: 'System AI'
+            }
+          ]
+        };
+      }
+    }
+
+    // 3. Fallback: If no area-specific staff found or all are busy, 
+    // keep as REPORTED and unassigned (Pending status)
+    return issue;
+  };
+
   const addIssue = (issue: Omit<Issue, 'id' | 'reportedAt' | 'status'>) => {
-    const newIssue: Issue = {
+    let newIssue: Issue = {
       ...issue,
       id: Math.random().toString(36).substr(2, 9),
       reportedAt: new Date(),
       status: IssueStatus.REPORTED,
       legalNotices: []
     };
+
+    // Try auto-assignment
+    newIssue = autoAssignStaff(newIssue);
+
     globalIssues = [newIssue, ...globalIssues];
     saveToStorage();
     notify();
@@ -194,13 +303,26 @@ export const useStore = () => {
   const updateUser = (data: Partial<User>) => {
     if (globalUser) {
       globalUser = { ...globalUser, ...data };
+      globalUsers = globalUsers.map(u => u.id === globalUser?.id ? { ...u, ...data } : u);
       saveToStorage();
       notify();
     }
   };
 
+  const updateAnyUser = (userId: string, data: Partial<User>) => {
+    globalUsers = globalUsers.map(u => u.id === userId ? { ...u, ...data } : u);
+    if (globalUser?.id === userId) {
+      globalUser = { ...globalUser, ...data };
+    }
+    saveToStorage();
+    notify();
+  };
+
   const setUser = (user: User | null) => {
     globalUser = user;
+    if (user && !globalUsers.some(u => u.id === user.id)) {
+      globalUsers = [...globalUsers, user];
+    }
     saveToStorage();
     notify();
   };
@@ -212,6 +334,12 @@ export const useStore = () => {
   };
 
   const login = (email: string, role?: User['role']) => {
+    const existingUser = globalUsers.find(u => u.email === email);
+    if (existingUser) {
+      setUser(existingUser);
+      return existingUser;
+    }
+
     const resolvedRole: User['role'] = role || (email.includes('admin') ? 'ADMIN' : 'CITIZEN');
     const user: User = {
       id: 'u_' + Math.random().toString(36).substr(2, 5),
@@ -224,7 +352,19 @@ export const useStore = () => {
     return user;
   };
 
-  const signup = (name: string, email: string, phone?: string, role?: User['role'], staffCategory?: string) => {
+  const signup = (
+    name: string, 
+    email: string, 
+    phone?: string, 
+    role?: User['role'], 
+    staffCategory?: string, 
+    staffArea?: string,
+    staffPincode?: string,
+    staffCity?: string,
+    staffDistrict?: string,
+    staffState?: string,
+    adminLocation?: User['adminLocation']
+  ) => {
     const resolvedRole: User['role'] = role || (email.includes('admin') ? 'ADMIN' : 'CITIZEN');
     const user: User = {
       id: 'u_' + Math.random().toString(36).substr(2, 5),
@@ -233,6 +373,12 @@ export const useStore = () => {
       phone,
       role: resolvedRole,
       staffCategory: resolvedRole === 'STAFF' ? staffCategory : undefined,
+      staffArea: resolvedRole === 'STAFF' ? staffArea : undefined,
+      staffPincode: resolvedRole === 'STAFF' ? staffPincode : undefined,
+      staffCity: resolvedRole === 'STAFF' ? staffCity : undefined,
+      staffDistrict: resolvedRole === 'STAFF' ? staffDistrict : undefined,
+      staffState: resolvedRole === 'STAFF' ? staffState : undefined,
+      adminLocation: resolvedRole === 'ADMIN' ? adminLocation : undefined,
       joinedAt: new Date().toISOString()
     };
     setUser(user);
@@ -242,14 +388,19 @@ export const useStore = () => {
       // Check for duplicate — don't add if this email is already in the staff directory
       const alreadyRegistered = globalStaffMembers.some(m => m.email === email);
       if (!alreadyRegistered) {
-        const staffMember: StaffMember & { userId: string; category: string } = {
+        const staffMember: StaffMember & { userId: string; category: string; area: string } = {
           name,
           title: 'Field Staff',
           phone: phone || '+91 00000 00000',
           email,
           shift: 'Morning',
           userId: user.id,
-          category: staffCategory
+          category: staffCategory,
+          area: staffArea || 'Central',
+          pincode: staffPincode,
+          city: staffCity,
+          district: staffDistrict,
+          state: staffState
         };
         globalStaffMembers = [...globalStaffMembers, staffMember];
         saveToStorage();
@@ -311,11 +462,28 @@ export const useStore = () => {
     return { currentIndex, totalStaff };
   };
 
+  const removeUser = (userId: string) => {
+    globalUsers = globalUsers.filter(u => u.id !== userId);
+    if (globalUser?.id === userId) {
+      globalUser = null;
+    }
+    saveToStorage();
+    notify();
+  };
+
+  // Attach to window for the admin delete button to access easily
+  if (typeof window !== 'undefined') {
+    (window as any).removeUserFromSystem = removeUser;
+  }
+
   return { 
     issues, 
+    users,
     currentUser, 
     currentLanguage,
     updateUser,
+    updateAnyUser,
+    removeUser,
     addIssue, 
     updateIssueStatus,
     updateIssueProgress,

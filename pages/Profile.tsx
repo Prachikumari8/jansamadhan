@@ -32,14 +32,23 @@ export const Profile: React.FC = () => {
 
   // Calculate stats
   const stats = useMemo(() => {
-    if (!currentUser) return { total: 0, resolved: 0, pending: 0, reputation: 0 };
+    if (!currentUser) return { total: 0, resolved: 0, pending: 0, reputation: 0, assignedTotal: 0, assignedResolved: 0 };
+    
+    // Reported issues (Citizen/All)
     const userIssues = issues.filter(i => i.reportedBy === currentUser.name || i.reportedBy === currentUser.email);
     const resolved = userIssues.filter(i => i.status === IssueStatus.RESOLVED).length;
+    
+    // Assigned issues (Staff)
+    const assignedIssues = issues.filter(i => i.assignedStaff?.email === currentUser.email);
+    const assignedResolved = assignedIssues.filter(i => i.status === IssueStatus.RESOLVED).length;
+    
     return {
       total: userIssues.length,
       resolved,
       pending: userIssues.length - resolved,
-      reputation: userIssues.length * 10 + resolved * 50
+      reputation: (userIssues.length * 10) + (resolved * 50) + (assignedResolved * 100),
+      assignedTotal: assignedIssues.length,
+      assignedResolved
     };
   }, [issues, currentUser]);
 
@@ -241,7 +250,11 @@ export const Profile: React.FC = () => {
               <div className="grid gap-4 lg:gap-6 pl-10 lg:pl-12">
                 <div className="flex flex-col">
                   <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Primary Location</span>
-                  <span className="text-sm lg:text-base font-semibold text-slate-700">Andhra Pradesh, India</span>
+                  <span className="text-sm lg:text-base font-semibold text-slate-700">
+                    {currentUser.role === 'STAFF' ? `${currentUser.staffCity}, ${currentUser.staffState}` : 
+                     currentUser.role === 'ADMIN' ? `${currentUser.adminLocation?.state}, India` : 
+                     'Andhra Pradesh, India'}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Active Since</span>
@@ -254,89 +267,168 @@ export const Profile: React.FC = () => {
             </section>
           </div>
 
-          {/* Right Column: Platform Activity */}
+          {/* Right Column: Platform Activity / Working Details */}
           <div className="space-y-6 lg:space-y-10 lg:overflow-y-auto no-scrollbar">
-            <section className="space-y-4 lg:space-y-6">
-              <div className="flex items-center gap-3 lg:gap-4">
-                <div className="w-7 h-7 lg:w-8 lg:h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-                  <Award className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-600" />
-                </div>
-                <h3 className="text-sm lg:text-base font-bold text-slate-800">Impact Stats</h3>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 lg:gap-6 pl-10 lg:pl-12">
-                <div className="p-3 sm:p-4 lg:p-5 bg-slate-50 rounded-xl lg:rounded-2xl space-y-1">
-                  <div className="flex items-center gap-2 text-indigo-600 mb-1">
-                    <Activity className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
-                    <span className="text-[7px] lg:text-[9px] font-black uppercase tracking-widest">Active</span>
+            {(currentUser.role === 'STAFF' || currentUser.role === 'ADMIN') && (
+              <section className="space-y-4 lg:space-y-6 animate-in fade-in slide-in-from-right-2 duration-500">
+                <div className="flex items-center gap-3 lg:gap-4">
+                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Briefcase className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600" />
                   </div>
-                  <p className="text-lg lg:text-2xl font-black text-slate-900">{stats.pending}</p>
-                  <p className="text-[8px] lg:text-[10px] font-medium text-slate-500 uppercase tracking-wide">Pending</p>
+                  <h3 className="text-sm lg:text-base font-bold text-slate-800">
+                    {currentUser.role === 'STAFF' ? 'Working Area Details' : 'Administrative Jurisdiction'}
+                  </h3>
                 </div>
-                <div className="p-3 sm:p-4 lg:p-5 bg-slate-50 rounded-xl lg:rounded-2xl space-y-1">
-                  <div className="flex items-center gap-2 text-emerald-600 mb-1">
-                    <Check className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
-                    <span className="text-[7px] lg:text-[9px] font-black uppercase tracking-widest">Fixed</span>
-                  </div>
-                  <p className="text-lg lg:text-2xl font-black text-slate-900">{stats.resolved}</p>
-                  <p className="text-[8px] lg:text-[10px] font-medium text-slate-500 uppercase tracking-wide">Resolved</p>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-4 lg:space-y-6">
-              <div className="flex items-center gap-3 lg:gap-4">
-                <div className="w-7 h-7 lg:w-8 lg:h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600" />
-                </div>
-                <h3 className="text-sm lg:text-base font-bold text-slate-800">Recent Activity</h3>
-              </div>
-              <div className="pl-10 lg:pl-12 space-y-4 lg:space-y-5">
-                {issues.filter(i => i.reportedBy === currentUser.name || i.reportedBy === currentUser.email).length > 0 ? (
-                  <div className="space-y-4 lg:space-y-6">
-                    {issues
-                      .filter(i => i.reportedBy === currentUser.name || i.reportedBy === currentUser.email)
-                      .slice(0, 2)
-                      .map((issue) => (
-                        <div key={issue.id} className="flex items-center justify-between group cursor-pointer" onClick={() => navigate('/dashboard')}>
-                          <div className="flex items-center gap-3 lg:gap-4 min-w-0">
-                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
-                              {issue.photoUrl ? (
-                                <img src={issue.photoUrl} className="w-full h-full object-cover" alt="" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                  <ImageIcon className="w-4 h-4 lg:w-5 lg:h-5" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs lg:text-sm font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors">
-                                {issue.status === IssueStatus.RESOLVED ? 'Issue Resolved' : 'Report Submitted'}
-                              </span>
-                              <span className="text-[9px] lg:text-[11px] text-slate-400 font-medium truncate">{issue.category} • {issue.location.address?.split(',')[0]}</span>
-                            </div>
-                          </div>
-                          <span className="hidden sm:inline-block text-[8px] lg:text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded shrink-0">
-                            {new Date(issue.reportedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="py-4 lg:py-6 text-center bg-slate-50 rounded-xl lg:rounded-2xl border-2 border-dashed border-slate-200">
-                    <p className="text-[10px] lg:text-xs font-medium text-slate-400">No recent activity</p>
-                  </div>
-                )}
                 
-                <button 
-                  onClick={() => navigate('/dashboard')}
-                  className="w-full flex items-center justify-center gap-2 py-3 lg:py-4 text-slate-400 hover:text-indigo-600 transition-colors border-t border-slate-100 mt-2"
-                >
-                  <span className="text-[8px] lg:text-[9px] font-black uppercase tracking-widest">Dashboard View</span>
-                  <ChevronRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 pl-10 lg:pl-12">
+                  {currentUser.role === 'STAFF' ? (
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Work Category</span>
+                        <span className="text-xs lg:text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded w-fit">{currentUser.staffCategory || 'General'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Assigned Area</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.staffArea || 'Main Division'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Pincode</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700 tracking-wider">{currentUser.staffPincode || '522502'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">District</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.staffDistrict || 'Guntur'}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Governing State</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.adminLocation?.state}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Target District</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.adminLocation?.district}</span>
+                      </div>
+                      <div className="flex flex-col col-span-2">
+                        <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Managed City</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.adminLocation?.city}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {currentUser.role === 'STAFF' && (
+              <section className="space-y-4 lg:space-y-6 animate-in fade-in slide-in-from-right-2 duration-700 delay-150 border-t border-slate-100 pt-6 mt-6">
+                <div className="flex items-center gap-3 lg:gap-4">
+                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                    <Activity className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-600" />
+                  </div>
+                  <h3 className="text-sm lg:text-base font-bold text-slate-800">Performance Metrics</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 pl-10 lg:pl-12">
+                   <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 space-y-1">
+                      <p className="text-xl lg:text-2xl font-black text-emerald-700">{stats.assignedResolved}</p>
+                      <p className="text-[8px] lg:text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest">Tasks Completed</p>
+                   </div>
+                   <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 space-y-1">
+                      <p className="text-xl lg:text-2xl font-black text-blue-700">{stats.assignedTotal - stats.assignedResolved}</p>
+                      <p className="text-[8px] lg:text-[9px] font-bold text-blue-600/70 uppercase tracking-widest">Active Workload</p>
+                   </div>
+                </div>
+              </section>
+            )}
+
+            {currentUser.role === 'CITIZEN' && (
+              <div className="space-y-6 lg:space-y-10 lg:overflow-y-auto no-scrollbar">
+                <section className="space-y-4 lg:space-y-6">
+                  <div className="flex items-center gap-3 lg:gap-4">
+                    <div className="w-7 h-7 lg:w-8 lg:h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                      <Award className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-600" />
+                    </div>
+                    <h3 className="text-sm lg:text-base font-bold text-slate-800">Impact Stats</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 lg:gap-6 pl-10 lg:pl-12">
+                    <div className="p-3 sm:p-4 lg:p-5 bg-slate-50 rounded-xl lg:rounded-2xl space-y-1">
+                      <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                        <Activity className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+                        <span className="text-[7px] lg:text-[9px] font-black uppercase tracking-widest">Active</span>
+                      </div>
+                      <p className="text-lg lg:text-2xl font-black text-slate-900">{stats.pending}</p>
+                      <p className="text-[8px] lg:text-[10px] font-medium text-slate-500 uppercase tracking-wide">Pending</p>
+                    </div>
+                    <div className="p-3 sm:p-4 lg:p-5 bg-slate-50 rounded-xl lg:rounded-2xl space-y-1">
+                      <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                        <Check className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+                        <span className="text-[7px] lg:text-[9px] font-black uppercase tracking-widest">Fixed</span>
+                      </div>
+                      <p className="text-lg lg:text-2xl font-black text-slate-900">{stats.resolved}</p>
+                      <p className="text-[8px] lg:text-[10px] font-medium text-slate-500 uppercase tracking-wide">Resolved</p>
+                    </div>
+                  </div>
+                </section>
               </div>
-            </section>
+            )}
+
+            {currentUser.role === 'CITIZEN' && (
+              <section className="space-y-4 lg:space-y-6">
+                <div className="flex items-center gap-3 lg:gap-4">
+                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600" />
+                  </div>
+                  <h3 className="text-sm lg:text-base font-bold text-slate-800">Recent Activity</h3>
+                </div>
+                <div className="pl-10 lg:pl-12 space-y-4 lg:space-y-5">
+                  {issues.filter(i => i.reportedBy === currentUser.name || i.reportedBy === currentUser.email).length > 0 ? (
+                    <div className="space-y-4 lg:space-y-6">
+                      {issues
+                        .filter(i => i.reportedBy === currentUser.name || i.reportedBy === currentUser.email)
+                        .slice(0, 2)
+                        .map((issue) => (
+                          <div key={issue.id} className="flex items-center justify-between group cursor-pointer" onClick={() => navigate('/dashboard')}>
+                            <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+                              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                {issue.photoUrl ? (
+                                  <img src={issue.photoUrl} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                    <ImageIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs lg:text-sm font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors">
+                                  {issue.status === IssueStatus.RESOLVED ? 'Issue Resolved' : 'Report Submitted'}
+                                </span>
+                                <span className="text-[9px] lg:text-[11px] text-slate-400 font-medium truncate">{issue.category} • {issue.location.address?.split(',')[0]}</span>
+                              </div>
+                            </div>
+                            <span className="hidden sm:inline-block text-[8px] lg:text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded shrink-0">
+                              {new Date(issue.reportedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="py-4 lg:py-6 text-center bg-slate-50 rounded-xl lg:rounded-2xl border-2 border-dashed border-slate-200">
+                      <p className="text-[10px] lg:text-xs font-medium text-slate-400">No recent activity</p>
+                    </div>
+                  )}
+                  
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full flex items-center justify-center gap-2 py-3 lg:py-4 text-slate-400 hover:text-indigo-600 transition-colors border-t border-slate-100 mt-2"
+                  >
+                    <span className="text-[8px] lg:text-[9px] font-black uppercase tracking-widest">Dashboard View</span>
+                    <ChevronRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                  </button>
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>

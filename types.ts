@@ -72,6 +72,11 @@ export interface StaffMember {
   phone: string;
   email: string;
   shift: string;
+  area?: string;
+  pincode?: string;
+  city?: string;
+  district?: string;
+  state?: string;
 }
 
 export interface IssueProgressUpdate {
@@ -107,5 +112,17 @@ export interface User {
   avatar?: string;
   phone?: string;
   staffCategory?: string; // Category for STAFF role (e.g., 'Pothole', 'Streetlight', etc.)
+  staffArea?: string; // Assigned work area for STAFF role
+  staffPincode?: string;
+  staffCity?: string;
+  staffDistrict?: string;
+  staffState?: string;
+  adminLocation?: {
+    state: string;
+    district: string;
+    city: string;
+    pincodes: string[];
+    wards: string[];
+  };
   joinedAt?: string; // ISO date string of when the user joined
 }
