@@ -177,8 +177,35 @@ export const useStore = () => {
       setCurrentLanguage(globalLanguage);
     };
     listeners.push(handleChange);
+    
+    // Initial fetch of users if admin
+    if (globalUser?.role === 'ADMIN') {
+      refreshUsers();
+    }
+
     return () => { listeners = listeners.filter(l => l !== handleChange); };
   }, []);
+
+  const refreshUsers = async () => {
+    try {
+      const token = localStorage.getItem('jansamadhan_token');
+      if (!token) return;
+
+      const res = await fetch('http://localhost:5000/api/auth/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        globalUsers = data.data.users || [];
+        saveToStorage();
+        notify();
+      }
+    } catch (err) {
+      console.error("Failed to fetch users from database", err);
+    }
+  };
 
   const autoAssignStaff = (issue: Issue): Issue => {
     // 1. Identify potential staff by Category and Area
@@ -497,6 +524,7 @@ export const useStore = () => {
     updateStaffCategory,
     getNextStaffForCategory,
     getStaffRotationState,
-    setLanguage
+    setLanguage,
+    refreshUsers
   };
 };

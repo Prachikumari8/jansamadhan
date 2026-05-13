@@ -211,3 +211,21 @@ export const getMe = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.status(200).json({
+      success: true,
+      results: users.length,
+      data: {
+        users
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

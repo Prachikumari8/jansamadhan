@@ -86,32 +86,52 @@ const UserCard: React.FC<{ user: User; issues: Issue[]; updateAnyUser: any; remo
       />
       <p className="text-[10px] text-slate-400 font-medium truncate mb-2">{user.email}</p>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <div className="flex items-center gap-2 text-[10px] text-slate-500">
-          <ShieldCheck className="w-3 h-3 text-slate-300" />
+          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
           <span className="font-semibold">{user.phone || 'No phone provided'}</span>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-          <MapIcon className="w-3 h-3 text-slate-300" />
-          <span className="truncate">
-            {user.role === 'STAFF' ? `${user.staffCity || 'City'}, ${user.staffDistrict || 'District'}` :
-              user.role === 'ADMIN' ? `${user.adminLocation?.city || 'City'}, ${user.adminLocation?.district || 'District'}` :
-                'Andhra Pradesh, India'}
-          </span>
+        
+        <div className="flex items-start gap-2 text-[10px] text-slate-500">
+          <MapIcon className="w-3.5 h-3.5 text-slate-400 mt-0.5" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-slate-700">
+              {user.role === 'STAFF' ? `${user.staffCity || 'City'}, ${user.staffDistrict || 'District'}` :
+                user.role === 'ADMIN' ? `${user.adminLocation?.city || 'City'}, ${user.adminLocation?.district || 'District'}` :
+                  'Andhra Pradesh, India'}
+            </span>
+            <span className="text-[9px] text-slate-400">
+              {user.role === 'STAFF' ? `${user.staffArea || 'No Area'}, PIN: ${user.staffPincode || 'N/A'}` :
+                user.role === 'ADMIN' ? `${user.adminLocation?.state || 'State'} • ${user.adminLocation?.wards?.length || 0} Wards` :
+                  'Citizen Account'}
+            </span>
+          </div>
         </div>
+
+        {user.role === 'ADMIN' && user.adminLocation?.pincodes && (
+          <div className="flex items-center gap-2 pt-1">
+            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[9px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              Zones: {user.adminLocation.pincodes.join(', ')}
+            </span>
+          </div>
+        )}
+
         {user.role === 'STAFF' && (
           <div className="flex items-center gap-2 pt-1">
-            <Building2 className="w-3 h-3 text-slate-300" />
-            <select
-              value={user.staffCategory || ''}
-              onChange={(e) => updateAnyUser(user.id, { staffCategory: e.target.value })}
-              className="text-[9px] font-bold text-slate-600 bg-white border border-slate-200 rounded px-1.5 py-0.5 outline-none hover:border-blue-400 transition-all"
-            >
-              <option value="">No Department</option>
-              {Object.values(IssueCategory).map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex-1">
+              <select
+                value={user.staffCategory || ''}
+                onChange={(e) => updateAnyUser(user.id, { staffCategory: e.target.value })}
+                className="w-full text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-2 py-1 outline-none hover:border-indigo-400 transition-all cursor-pointer"
+              >
+                <option value="">No Department</option>
+                {Object.values(IssueCategory).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
@@ -152,7 +172,8 @@ export const AdminPortal: React.FC = () => {
     removeStaff,
     updateStaffCategory,
     updateAnyUser,
-    removeUser
+    removeUser,
+    refreshUsers
   } = useStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -178,6 +199,8 @@ export const AdminPortal: React.FC = () => {
   const [reportedIssuesTab, setReportedIssuesTab] = useState<'24hours' | 'inProgress' | 'closed'>('24hours');
   const [filterDept, setFilterDept] = useState<string>('All Departments');
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
+  const [citizenSearchQuery, setCitizenSearchQuery] = useState('');
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progressDrafts, setProgressDrafts] = useState<Record<string, string>>({});
   const [selectedStageByIssue, setSelectedStageByIssue] = useState<Record<string, typeof ISSUE_PROGRESS_STAGES[number]>>({});
@@ -248,8 +271,24 @@ export const AdminPortal: React.FC = () => {
     });
   };
 
-  const citizens = useMemo(() => users.filter(u => u.role === 'CITIZEN'), [users]);
-  const admins = useMemo(() => users.filter(u => u.role === 'ADMIN'), [users]);
+  const filteredCitizens = useMemo(() => {
+    return users.filter(u => {
+      const isCitizen = u.role === 'CITIZEN';
+      const matchesSearch = u.name.toLowerCase().includes(citizenSearchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(citizenSearchQuery.toLowerCase());
+      return isCitizen && matchesSearch;
+    });
+  }, [users, citizenSearchQuery]);
+
+  const filteredAdmins = useMemo(() => {
+    return users.filter(u => {
+      const isAdmin = u.role === 'ADMIN';
+      const matchesSearch = u.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(adminSearchQuery.toLowerCase());
+      return isAdmin && matchesSearch;
+    });
+  }, [users, adminSearchQuery]);
+
   const staff = useMemo(() => users.filter(u => u.role === 'STAFF'), [users]);
 
   return (
@@ -272,6 +311,13 @@ export const AdminPortal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => refreshUsers()}
+              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+              title="Refresh users from database"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Jurisdiction</span>
               <span className="text-xs font-bold text-slate-900">{currentUser?.adminLocation?.city}, {currentUser?.adminLocation?.district}</span>
@@ -284,76 +330,107 @@ export const AdminPortal: React.FC = () => {
         <div className="space-y-8">
           {activeView === 'MAP' && (
             <div className="space-y-12">
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                      <Users className="w-4 h-4" />
+              <section className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-2xl shadow-emerald-900/10 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                      <Users className="w-6 h-6" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Citizen Registry</h2>
-                      <p className="text-[10px] font-medium text-slate-400">Manage public accounts and profiles</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                    {citizens.length} Registered
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {citizens.map(user => (
-                    <UserCard key={user.id} user={user} issues={issues} updateAnyUser={updateAnyUser} removeUser={removeUser} removeStaff={removeStaff} />
-                  ))}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Administrative Board</h2>
-                      <p className="text-[10px] font-medium text-slate-400">High-privilege system controllers</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100">
-                    {admins.length} Admins
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {admins.map(user => (
-                    <UserCard key={user.id} user={user} issues={issues} updateAnyUser={updateAnyUser} removeUser={removeUser} removeStaff={removeStaff} />
-                  ))}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-                      <Activity className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-bold text-slate-900 tracking-tight">Staff Directory</h2>
-                      <p className="text-[11px] font-medium text-slate-500">Manage departmental resolution teams</p>
+                      <h2 className="text-lg font-bold text-white tracking-tight">Citizen Registry</h2>
+                      <p className="text-xs font-medium text-emerald-400/80 uppercase tracking-wider">Public Accounts & Profiles</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 relative z-10">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Search citizens..."
+                        value={citizenSearchQuery}
+                        onChange={(e) => setCitizenSearchQuery(e.target.value)}
+                        className="pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-2xl text-xs text-white placeholder:text-slate-500 outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all w-full sm:w-72 shadow-inner"
+                      />
+                    </div>
+                    <div className="px-4 py-2 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20 border border-emerald-400/20">
+                      {filteredCitizens.length} REGISTERED
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredCitizens.map(user => (
+                    <UserCard key={user.id} user={user} issues={issues} updateAnyUser={updateAnyUser} removeUser={removeUser} removeStaff={removeStaff} />
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-2xl shadow-rose-900/10 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-white tracking-tight">Administrative Board</h2>
+                      <p className="text-xs font-medium text-rose-400/80 uppercase tracking-wider">System Controllers & Governance</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Search admins..."
+                        value={adminSearchQuery}
+                        onChange={(e) => setAdminSearchQuery(e.target.value)}
+                        className="pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-2xl text-xs text-white placeholder:text-slate-500 outline-none focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500/50 transition-all w-full sm:w-72 shadow-inner"
+                      />
+                    </div>
+                    <div className="px-4 py-2 bg-rose-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-900/20 border border-rose-400/20">
+                      {filteredAdmins.length} ADMINS
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredAdmins.map(user => (
+                    <UserCard key={user.id} user={user} issues={issues} updateAnyUser={updateAnyUser} removeUser={removeUser} removeStaff={removeStaff} />
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-2xl shadow-indigo-900/10 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                      <Activity className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-white tracking-tight">Staff Directory</h2>
+                      <p className="text-xs font-medium text-indigo-400/80 uppercase tracking-wider">Departmental Resolution Teams</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input
                         type="text"
                         placeholder="Search staff by name or email..."
                         value={staffSearchQuery}
                         onChange={(e) => setStaffSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all w-full sm:w-64"
+                        className="pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-2xl text-xs text-white placeholder:text-slate-500 outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all w-full sm:w-72 shadow-inner"
                       />
                     </div>
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
-                      {staff.length} Active
-                    </span>
+                    <div className="px-4 py-2 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-900/20 border border-indigo-400/20">
+                      {staff.length} ACTIVE
+                    </div>
                   </div>
                 </div>
 
