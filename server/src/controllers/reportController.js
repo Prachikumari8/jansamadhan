@@ -11,8 +11,14 @@ export const createReport = async (req, res, next) => {
       address: req.body.address,
       latitude: parseFloat(req.body.latitude),
       longitude: parseFloat(req.body.longitude),
+      area: req.body.area || null,
+      city: req.body.city || null,
+      district: req.body.district || null,
+      state: req.body.state || null,
+      pincode: req.body.pincode || null,
       imageUrl: ''
     };
+
 
     // Handle Image Upload to Google Drive (non-blocking)
     if (req.file) {

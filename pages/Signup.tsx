@@ -3334,7 +3334,12 @@ export const Signup: React.FC = () => {
           password: formData.password,
           phone: formData.phone,
           role: role,
-          staffCategory: role === 'STAFF' ? staffCategory : undefined
+          staffCategory: role === 'STAFF' ? staffCategory : undefined,
+          area: role === 'STAFF' ? staffArea : undefined,
+          city: role === 'STAFF' ? staffCity : undefined,
+          district: role === 'STAFF' ? staffDistrict : undefined,
+          state: role === 'STAFF' ? staffState : undefined,
+          pincode: role === 'STAFF' ? staffPincode : undefined
         }),
       });
 

@@ -109,6 +109,16 @@ export const ReportPage: React.FC = () => {
       formData.append('longitude', finalLocation.lng.toString());
       formData.append('address', data.manualAddress || detectedAddress?.fullAddress || 'Detected Location');
       
+      // Detailed location for matching
+      const addr = data.addressDetails || detectedAddress;
+      if (addr) {
+        formData.append('area', addr.area || '');
+        formData.append('city', addr.city || '');
+        formData.append('district', addr.district || '');
+        formData.append('state', addr.state || '');
+        formData.append('pincode', addr.pincode || '');
+      }
+      
       // 2. Convert base64 photo to Blob
       if (data.photo) {
         const fetchResponse = await fetch(data.photo);
@@ -222,19 +232,21 @@ export const ReportPage: React.FC = () => {
       <div 
         className={`transition-all duration-500 ease-in-out bg-white ${
           isConfirmed 
-            ? 'fixed inset-0 z-[150] w-full h-full md:relative md:inset-auto md:z-auto md:w-1/2 md:h-full opacity-100 translate-y-0 md:translate-y-0 md:translate-x-0' 
+            ? 'fixed inset-0 z-[150] w-full h-full md:relative md:inset-auto md:z-auto md:w-1/2 md:h-full opacity-100 visible pointer-events-auto translate-y-0 md:translate-y-0 md:translate-x-0' 
             : 'fixed inset-0 z-[150] w-full h-full md:relative md:inset-auto md:z-auto md:w-0 md:h-full opacity-0 translate-y-full md:translate-y-0 md:translate-x-full invisible pointer-events-none'
         } overflow-hidden`}
       >
+
         {isConfirmed && (
           <ReportForm 
             onSubmit={handleFormSubmit}
             onAddressManualSync={handleAddressManualUpdate}
             onCancel={() => setIsConfirmed(false)}
-            initialCoords={markerPosition}
+            initialCoords={markerPosition || DEFAULT_COORDS}
             address={detectedAddress}
             isGeocoding={isGeocoding}
           />
+
         )}
       </div>
     </div>

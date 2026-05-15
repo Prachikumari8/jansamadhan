@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ArrowRight,
   ChevronLeft,
+  ChevronRight,
   AlertCircle,
   ImageIcon,
   LayoutGrid,
@@ -31,7 +32,15 @@ interface ReportFormProps {
   isGeocoding: boolean;
 }
 
-export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, address, isGeocoding }) => {
+export const ReportForm: React.FC<ReportFormProps> = ({ 
+  onSubmit, 
+  onCancel, 
+  address, 
+  isGeocoding,
+  onAddressManualSync,
+  initialCoords
+}) => {
+
   const { currentUser, currentLanguage } = useStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);

@@ -1,14 +1,37 @@
 import prisma from '../config/prisma.js';
 
 export const createReport = async (reportData, userId) => {
+  // Find matching staff member
+  // 1. Must be a STAFF
+  // 2. staffCategory matches report's issueType
+  // 3. area matches report's area
+  const matchingStaff = await prisma.user.findFirst({
+    where: {
+      role: 'STAFF',
+      staffCategory: reportData.issueType,
+      OR: [
+        { area: reportData.area },
+        { pincode: reportData.pincode }
+      ]
+    }
+  });
+
   return await prisma.report.create({
     data: {
       ...reportData,
       reportedById: userId,
-      status: 'PENDING'
+      assignedToId: matchingStaff ? matchingStaff.id : null,
+      status: matchingStaff ? 'IN_PROGRESS' : 'PENDING'
     },
     include: {
       reportedBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      },
+      assignedTo: {
         select: {
           id: true,
           name: true,
@@ -18,6 +41,7 @@ export const createReport = async (reportData, userId) => {
     }
   });
 };
+
 
 export const getAllReports = async (filters = {}) => {
   return await prisma.report.findMany({

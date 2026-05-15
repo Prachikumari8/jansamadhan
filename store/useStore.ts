@@ -114,11 +114,11 @@ const loadFromStorage = () => {
             phone: staff.phone,
             role: 'STAFF',
             staffCategory: staff.category,
-            staffArea: staff.area,
-            staffPincode: staff.pincode,
-            staffCity: staff.city,
-            staffDistrict: staff.district,
-            staffState: staff.state,
+            area: staff.area,
+            pincode: staff.pincode,
+            city: staff.city,
+            district: staff.district,
+            state: staff.state,
             joinedAt: new Date().toISOString()
           });
         }
@@ -208,17 +208,21 @@ export const useStore = () => {
   };
 
   const autoAssignStaff = (issue: Issue): Issue => {
-    // 1. Identify potential staff by Category and Area
-    // We check if the staff's area is mentioned in the issue address (case-insensitive)
-    const issueAddress = (issue.location.address || "").toLowerCase();
-    
     const potentialStaff = globalStaffMembers.filter(m => {
       const isSameCategory = m.category === issue.category;
-      const isSameArea = m.area && issueAddress.includes(m.area.toLowerCase());
+      
+      // Check if area or pincode matches
+      const issueArea = issue.location.details?.area || "";
+      const issuePincode = issue.location.details?.pincode || "";
+      
+      const isSameArea = (m.area && issueArea && issueArea.toLowerCase().includes(m.area.toLowerCase())) ||
+                         (m.pincode && issuePincode && m.pincode === issuePincode);
+                         
       return isSameCategory && isSameArea;
     });
 
     // 2. Find a staff member with capacity
+
     for (const staff of potentialStaff) {
       const activeWorkload = globalIssues.filter(i => 
         i.assignedStaff?.email === staff.email && 
@@ -400,14 +404,15 @@ export const useStore = () => {
       phone,
       role: resolvedRole,
       staffCategory: resolvedRole === 'STAFF' ? staffCategory : undefined,
-      staffArea: resolvedRole === 'STAFF' ? staffArea : undefined,
-      staffPincode: resolvedRole === 'STAFF' ? staffPincode : undefined,
-      staffCity: resolvedRole === 'STAFF' ? staffCity : undefined,
-      staffDistrict: resolvedRole === 'STAFF' ? staffDistrict : undefined,
-      staffState: resolvedRole === 'STAFF' ? staffState : undefined,
+      area: resolvedRole === 'STAFF' ? staffArea : undefined,
+      pincode: resolvedRole === 'STAFF' ? staffPincode : undefined,
+      city: resolvedRole === 'STAFF' ? staffCity : undefined,
+      district: resolvedRole === 'STAFF' ? staffDistrict : undefined,
+      state: resolvedRole === 'STAFF' ? staffState : undefined,
       adminLocation: resolvedRole === 'ADMIN' ? adminLocation : undefined,
       joinedAt: new Date().toISOString()
     };
+
     setUser(user);
     
     // Add to staff directory if they signed up as STAFF

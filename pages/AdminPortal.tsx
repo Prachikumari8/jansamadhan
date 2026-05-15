@@ -96,12 +96,13 @@ const UserCard: React.FC<{ user: User; issues: Issue[]; updateAnyUser: any; remo
           <MapIcon className="w-3.5 h-3.5 text-slate-400 mt-0.5" />
           <div className="flex flex-col gap-0.5">
             <span className="font-bold text-slate-700">
-              {user.role === 'STAFF' ? `${user.staffCity || 'City'}, ${user.staffDistrict || 'District'}` :
+              {user.role === 'STAFF' ? `${user.city || 'City'}, ${user.district || 'District'}` :
                 user.role === 'ADMIN' ? `${user.adminLocation?.city || 'City'}, ${user.adminLocation?.district || 'District'}` :
                   'Andhra Pradesh, India'}
             </span>
             <span className="text-[9px] text-slate-400">
-              {user.role === 'STAFF' ? `${user.staffArea || 'No Area'}, PIN: ${user.staffPincode || 'N/A'}` :
+              {user.role === 'STAFF' ? `${user.area || 'No Area'}, PIN: ${user.pincode || 'N/A'}` :
+
                 user.role === 'ADMIN' ? `${user.adminLocation?.state || 'State'} • ${user.adminLocation?.wards?.length || 0} Wards` :
                   'Citizen Account'}
             </span>

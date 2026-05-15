@@ -29,6 +29,13 @@ model User {
   role      Role     @default(CITIZEN)
   staffCategory String?
   
+  // Location fields for Staff
+  area      String?
+  city      String?
+  district  String?
+  state     String?
+  pincode   String?
+  
   // Auth enhancements
   googleId    String?  @unique
   otpString   String?
@@ -52,6 +59,14 @@ model Report {
   latitude    Float
   longitude   Float
   address     String
+  
+  // Location fields for matching
+  area      String?
+  city      String?
+  district  String?
+  state     String?
+  pincode   String?
+  
   status      ReportStatus @default(PENDING)
   
   reportedById String
@@ -65,3 +80,4 @@ model Report {
 
   @@map("reports")
 }
+

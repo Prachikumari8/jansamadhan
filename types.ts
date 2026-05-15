@@ -112,11 +112,12 @@ export interface User {
   avatar?: string;
   phone?: string;
   staffCategory?: string; // Category for STAFF role (e.g., 'Pothole', 'Streetlight', etc.)
-  staffArea?: string; // Assigned work area for STAFF role
-  staffPincode?: string;
-  staffCity?: string;
-  staffDistrict?: string;
-  staffState?: string;
+  area?: string; // Assigned work area
+  pincode?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+
   adminLocation?: {
     state: string;
     district: string;
