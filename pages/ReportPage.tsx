@@ -16,6 +16,8 @@ export const ReportPage: React.FC = () => {
   useEffect(() => {
     if (!currentUser) {
       navigate('/login');
+    } else if (currentUser.role === 'STAFF') {
+      navigate('/dashboard');
     }
   }, [currentUser, navigate]);
 

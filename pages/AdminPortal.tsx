@@ -38,7 +38,7 @@ import {
   Trash2,
   PlusCircle
 } from 'lucide-react';
-import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
+import { CATEGORY_CONFIG, DEPARTMENTS, SLA_HOURS, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
 import { generateCityBriefing } from '../services/geminiService.ts';
 import { getTranslation } from '../services/i18n';
 
@@ -181,7 +181,7 @@ export const AdminPortal: React.FC = () => {
 
   // Redirect if not authorized
   useEffect(() => {
-    if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'STAFF')) {
+    if (!currentUser || currentUser.role !== 'ADMIN') {
       navigate('/');
     }
   }, [currentUser, navigate]);
@@ -227,7 +227,7 @@ export const AdminPortal: React.FC = () => {
         isAtRisk: hoursRemaining > 0 && hoursRemaining < 4 && issue.status !== IssueStatus.RESOLVED,
         isBreached: hoursRemaining <= 0 && issue.status !== IssueStatus.RESOLVED,
         latestProgress,
-        staff: issue.assignedStaff || CATEGORY_STAFF[issue.category][0]
+        staff: issue.assignedStaff
       };
     });
   }, [issues]);
@@ -262,7 +262,7 @@ export const AdminPortal: React.FC = () => {
       percent,
       note,
       updatedBy: currentUser?.name || 'Admin',
-      assignedStaff: issue.assignedStaff || CATEGORY_STAFF[issue.category][0]
+      assignedStaff: issue.assignedStaff
     });
     setProgressDrafts(drafts => ({ ...drafts, [issue.id]: '' }));
     setSelectedStageByIssue(stages => {
@@ -329,7 +329,7 @@ export const AdminPortal: React.FC = () => {
 
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 pb-16">
         <div className="space-y-8">
-          {activeView === 'MAP' && (
+          {activeView === 'MAP' && currentUser?.role === 'ADMIN' && (
             <div className="space-y-12">
               <section className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-2xl shadow-emerald-900/10 relative overflow-hidden group">
@@ -544,14 +544,35 @@ export const AdminPortal: React.FC = () => {
                           </div>
 
                           <div className="pt-4 border-t border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
-                                <Activity className="w-4 h-4" />
+                            <div className="flex flex-wrap items-center gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                                  <Activity className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Stage</p>
+                                  <p className="text-xs font-semibold text-slate-700">{currentProgress.stage}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Stage</p>
-                                <p className="text-xs font-semibold text-slate-700">{currentProgress.stage}</p>
-                              </div>
+
+                              {issue.assignedStaff && (
+                                <div className="flex items-center gap-3 pl-0 md:pl-4 md:border-l border-slate-100">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+                                    <UserCheck className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assigned Worker</p>
+                                    <p className="text-xs font-semibold text-slate-700">{issue.assignedStaff.name}</p>
+                                    {(() => {
+                                      const assignUpdate = issue.progressUpdates?.find(u => u.stage === 'Assigned');
+                                      if (assignUpdate) {
+                                        return <p className="text-[10px] text-slate-500">{new Date(assignUpdate.updatedAt).toLocaleString()}</p>;
+                                      }
+                                      return null;
+                                    })()}
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-2">

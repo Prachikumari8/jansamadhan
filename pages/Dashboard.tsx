@@ -22,7 +22,7 @@ import {
   Check
 } from 'lucide-react';
 import { IssueStatus, Issue, IssueCategory } from '../types.ts';
-import { DEPARTMENTS, SLA_HOURS, CATEGORY_STAFF, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
+import { DEPARTMENTS, SLA_HOURS, ISSUE_PROGRESS_STAGES } from '../constants.tsx';
 import { getTranslation } from '../services/i18n';
 
 const StatusBadge: React.FC<{ status: IssueStatus }> = ({ status }) => {
@@ -143,11 +143,12 @@ export const Dashboard: React.FC = () => {
     return stageMap[stage];
   };
 
-  const submitStaffProgressUpdate = (issue: Issue) => {
-    if (!staffSelectedStage || !staffProgressNote.trim()) return;
+  const submitStaffProgressUpdate = (issue: Issue, overrideStage?: typeof ISSUE_PROGRESS_STAGES[number]) => {
+    const stageToUse = overrideStage || staffSelectedStage;
+    if (!stageToUse || !staffProgressNote.trim()) return;
     updateIssueProgress(issue.id, {
-      stage: staffSelectedStage,
-      percent: getStagePercent(staffSelectedStage),
+      stage: stageToUse,
+      percent: getStagePercent(stageToUse),
       note: staffProgressNote,
       updatedBy: currentUser?.name || 'Unknown Staff',
       assignedStaff: issue.assignedStaff
@@ -240,7 +241,19 @@ export const Dashboard: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Assignment Details</p>
+                        <p className="text-sm font-semibold text-slate-900 mb-1">{issue.assignedStaff?.name || currentUser?.name}</p>
+                        {(() => {
+                          const assignUpdate = issue.progressUpdates?.find(u => u.stage === 'Assigned');
+                          return (
+                            <p className="text-[10px] text-slate-500">
+                              {assignUpdate ? new Date(assignUpdate.updatedAt).toLocaleString() : new Date(issue.reportedAt).toLocaleString()}
+                            </p>
+                          );
+                        })()}
+                      </div>
                       <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Progress</p>
                         <p className="text-sm font-semibold text-slate-900 mb-1">{currentProgress.stage}</p>
@@ -259,7 +272,7 @@ export const Dashboard: React.FC = () => {
                     <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 space-y-2">
                       <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Update Progress</p>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {ISSUE_PROGRESS_STAGES.map((stage) => (
+                        {ISSUE_PROGRESS_STAGES.filter(s => s !== 'Reported' && s !== 'Resolved').map((stage) => (
                           <button
                             key={stage}
                             onClick={() => setStaffSelectedStage(stage)}
@@ -279,13 +292,22 @@ export const Dashboard: React.FC = () => {
                         placeholder="Add a note about your progress..."
                         className="w-full min-h-[70px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-100"
                       />
-                      <button
-                        onClick={() => submitStaffProgressUpdate(issue)}
-                        disabled={!staffSelectedStage || !staffProgressNote.trim()}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-widest transition-colors"
-                      >
-                        <Check className="w-4 h-4 inline mr-2" /> Submit Progress Update
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                        <button
+                          onClick={() => submitStaffProgressUpdate(issue)}
+                          disabled={!staffSelectedStage || staffSelectedStage === 'Resolved' || !staffProgressNote.trim()}
+                          className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-colors"
+                        >
+                          <Activity className="w-3 h-3 inline mr-1.5" /> Update Status
+                        </button>
+                        <button
+                          onClick={() => submitStaffProgressUpdate(issue, 'Resolved')}
+                          disabled={!staffProgressNote.trim()}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-colors"
+                        >
+                          <CheckCircle2 className="w-3 h-3 inline mr-1.5" /> Complete & Close
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -616,15 +638,15 @@ export const Dashboard: React.FC = () => {
                         {selectedIssue.assignedStaff ? (
                           <div className="space-y-0.5">
                             <p className="text-sm font-black text-slate-900">{selectedIssue.assignedStaff.name}</p>
-                            <p className="text-xs font-medium text-slate-600">{selectedIssue.assignedStaff.title}</p>
+                            <p className="text-xs font-medium text-slate-600">{selectedIssue.assignedStaff.title || 'Staff'}</p>
                             <p className="text-[11px] text-slate-500">{selectedIssue.assignedStaff.phone}</p>
                             <p className="text-[11px] text-slate-500">{selectedIssue.assignedStaff.email}</p>
                           </div>
                         ) : (
                           <div className="space-y-0.5">
-                            <p className="text-xs font-semibold text-slate-700">{CATEGORY_STAFF[selectedIssue.category][0].name}</p>
-                            <p className="text-[11px] text-slate-500">{CATEGORY_STAFF[selectedIssue.category][0].title}</p>
-                            <p className="text-[11px] text-slate-500">{CATEGORY_STAFF[selectedIssue.category][0].phone}</p>
+                            <p className="text-xs font-semibold text-slate-700">Unassigned</p>
+                            <p className="text-[11px] text-slate-500">No registered staff in this location.</p>
+                            <p className="text-[11px] text-slate-500">Pending Assignment</p>
                           </div>
                         )}
                       </div>

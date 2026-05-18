@@ -251,7 +251,7 @@ export const Profile: React.FC = () => {
                 <div className="flex flex-col">
                   <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Primary Location</span>
                   <span className="text-sm lg:text-base font-semibold text-slate-700">
-                    {currentUser.role === 'STAFF' ? `${currentUser.staffCity}, ${currentUser.staffState}` : 
+                    {currentUser.role === 'STAFF' ? `${currentUser.city}, ${currentUser.state}` : 
                      currentUser.role === 'ADMIN' ? `${currentUser.adminLocation?.state}, India` : 
                      'Andhra Pradesh, India'}
                   </span>
@@ -289,15 +289,15 @@ export const Profile: React.FC = () => {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Assigned Area</span>
-                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.staffArea || 'Main Division'}</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.area || 'Main Division'}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Pincode</span>
-                        <span className="text-xs lg:text-sm font-semibold text-slate-700 tracking-wider">{currentUser.staffPincode || '522502'}</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700 tracking-wider">{currentUser.pincode || '522502'}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[8px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">District</span>
-                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.staffDistrict || 'Guntur'}</span>
+                        <span className="text-xs lg:text-sm font-semibold text-slate-700">{currentUser.district || 'Guntur'}</span>
                       </div>
                     </>
                   ) : (

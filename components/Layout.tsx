@@ -60,14 +60,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="flex items-center space-x-2 overflow-hidden">
               <nav className="flex items-center space-x-0.5">
                 <NavLink to="/" icon={HomeIcon}>{copy.home}</NavLink>
-                {currentUser?.role === 'ADMIN' || currentUser?.role === 'STAFF' ? (
+                {currentUser?.role === 'ADMIN' ? (
                   <>
                     <NavLink to="/admin?view=MAP" icon={Users}>User Management</NavLink>
                     <NavLink to="/admin?view=QUEUE" icon={TableIcon}>Reported Issues</NavLink>
                   </>
                 ) : (
                   <>
-                    <NavLink to="/report" icon={PlusCircle}>{copy.report}</NavLink>
+                    {currentUser?.role !== 'STAFF' && <NavLink to="/report" icon={PlusCircle}>{copy.report}</NavLink>}
                     <NavLink to="/dashboard" icon={LayoutDashboard}>{copy.dashboard}</NavLink>
                   </>
                 )}

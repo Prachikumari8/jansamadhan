@@ -13,7 +13,7 @@ import { languages, translations } from '../services/i18n.ts';
 const IssueMap = lazy(() => import('../components/IssueMap.tsx').then(module => ({ default: module.IssueMap })));
 
 export const Home: React.FC = () => {
-  const { issues, currentLanguage, setLanguage } = useStore();
+  const { issues, currentLanguage, setLanguage, currentUser } = useStore();
   const copy = translations[currentLanguage];
   const [searchQuery, setSearchQuery] = useState('');
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]);
@@ -138,14 +138,16 @@ export const Home: React.FC = () => {
             </form>
           </div>
 
-          <Link
-            to="/report"
-            className="inline-flex items-center h-10 sm:h-11 bg-slate-950 text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg px-6 sm:px-8 group uppercase tracking-[0.15em] text-[10px] mt-8 sm:mt-10"
-          >
-            <PlusCircle className="w-4 h-4 mr-2 sm:mr-3" />
-            <span className="mt-0.5">{copy.report_issue}</span>
-            <ArrowRight className="w-4 h-4 ml-3 sm:ml-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          {currentUser?.role !== 'STAFF' && (
+            <Link
+              to="/report"
+              className="inline-flex items-center h-10 sm:h-11 bg-slate-950 text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg px-6 sm:px-8 group uppercase tracking-[0.15em] text-[10px] mt-8 sm:mt-10"
+            >
+              <PlusCircle className="w-4 h-4 mr-2 sm:mr-3" />
+              <span className="mt-0.5">{copy.report_issue}</span>
+              <ArrowRight className="w-4 h-4 ml-3 sm:ml-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          )}
         </div>
       </section>
 

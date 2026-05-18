@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Issue, IssueStatus, User, IssueCategory, LegalNotice, IssueProgressUpdate, StaffMember } from '../types.ts';
-import { CATEGORY_STAFF } from '../constants.tsx';
+
 import { defaultLanguage, type LanguageCode } from '../services/i18n.ts';
 
 const INITIAL_ISSUES: Issue[] = [
@@ -209,19 +209,38 @@ export const useStore = () => {
 
   const autoAssignStaff = (issue: Issue): Issue => {
     const potentialStaff = globalStaffMembers.filter(m => {
-      const isSameCategory = m.category === issue.category;
+      if (m.category !== issue.category) return false;
       
-      // Check if area or pincode matches
-      const issueArea = issue.location.details?.area || "";
-      const issuePincode = issue.location.details?.pincode || "";
+      const issueDetails = issue.location.details || {};
+      const issueArea = issueDetails.area || "";
+      const issuePincode = issueDetails.pincode || "";
+      const issueCity = issueDetails.city || "";
+      const issueDistrict = issueDetails.district || "";
+      const fullAddress = (issue.location.address || "").toLowerCase();
       
-      const isSameArea = (m.area && issueArea && issueArea.toLowerCase().includes(m.area.toLowerCase())) ||
-                         (m.pincode && issuePincode && m.pincode === issuePincode);
-                         
-      return isSameCategory && isSameArea;
-    });
+      const safeMatch = (staffVal: string | undefined, issueVal: string | undefined) => {
+         if (!staffVal || !issueVal) return false;
+         const a = staffVal.toLowerCase().replace(/(city|town|rural area|district|county)/g, '').trim();
+         const b = issueVal.toLowerCase().replace(/(city|town|rural area|district|county)/g, '').trim();
+         if (a.length < 3 || b.length < 3) return false;
+         return a.includes(b) || b.includes(a);
+      };
+      
+      const matchAddressStr = (staffVal: string | undefined) => {
+         if (!staffVal) return false;
+         const clean = staffVal.toLowerCase().replace(/(city|town|rural area|district|county)/g, '').trim();
+         if (clean.length < 3) return false;
+         return fullAddress.includes(clean);
+      };
 
-    // 2. Find a staff member with capacity
+      // Strict matching for area allocation
+      const matchPincode = (m.pincode && issuePincode && m.pincode === issuePincode) || matchAddressStr(m.pincode);
+      const matchArea = safeMatch(m.area, issueArea) || matchAddressStr(m.area);
+      const matchCity = safeMatch(m.city, issueCity) || matchAddressStr(m.city);
+      const matchDistrict = safeMatch(m.district, issueDistrict) || matchAddressStr(m.district);
+                         
+      return matchPincode || matchArea || matchCity || matchDistrict;
+    });
 
     for (const staff of potentialStaff) {
       const activeWorkload = globalIssues.filter(i => 
@@ -230,7 +249,6 @@ export const useStore = () => {
       ).length;
 
       if (activeWorkload < MAX_ACTIVE_ISSUES) {
-        // Found a free staff member in the same area
         return {
           ...issue,
           status: IssueStatus.IN_PROGRESS,
@@ -240,7 +258,7 @@ export const useStore = () => {
             {
               id: 'prog_' + Math.random().toString(36).substr(2, 7),
               stage: 'Assigned',
-              note: `Automatically assigned to ${staff.name} (${staff.area} Division)`,
+              note: `Automatically assigned to ${staff.name} (${staff.area || staff.city || 'Local'} Division)`,
               percent: 50,
               updatedAt: new Date(),
               updatedBy: 'System AI'
@@ -250,8 +268,7 @@ export const useStore = () => {
       }
     }
 
-    // 3. Fallback: If no area-specific staff found or all are busy, 
-    // keep as REPORTED and unassigned (Pending status)
+    // Keep as REPORTED and unassigned if no exact area staff is found or all are busy
     return issue;
   };
 
@@ -464,7 +481,7 @@ export const useStore = () => {
    * Cycles through available staff based on assignment history.
    */
   const getNextStaffForCategory = (category: IssueCategory): StaffMember => {
-    const availableStaff = CATEGORY_STAFF[category] || [];
+    const availableStaff = globalStaffMembers.filter(m => m.category === category);
     if (availableStaff.length === 0) {
       return { name: 'Unassigned', title: 'N/A', phone: 'N/A', email: 'N/A', shift: 'N/A' };
     }
@@ -490,7 +507,7 @@ export const useStore = () => {
    */
   const getStaffRotationState = (category: IssueCategory) => {
     const currentIndex = staffAssignmentIndex[category] || 0;
-    const totalStaff = CATEGORY_STAFF[category]?.length || 0;
+    const totalStaff = globalStaffMembers.filter(m => m.category === category).length;
     return { currentIndex, totalStaff };
   };
 
